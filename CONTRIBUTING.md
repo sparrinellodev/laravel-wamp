@@ -50,7 +50,7 @@ git checkout -b fix/bug-description
 - PSR-12 as the code standard (enforced by Pint)
 - Typed properties, return types, and parameters always declared
 - Prefer `readonly` where possible
-- Comments In Italian for consistency with the project
+- English for PHPDoc, comments, exception messages, and test descriptions
 
 ### Commit
 

@@ -42,7 +42,7 @@ WampClient — façade over all of the above + ReconnectManager
 
 ## Conventions
 
-- **English everywhere**: PHPDoc, inline comments, exception messages, and Pest `describe`/`it` descriptions. Many existing tests still use Italian descriptions and assert Italian message fragments — migrate them to English when you touch them. This supersedes the "comments in Italian" line in `CONTRIBUTING.md`.
+- **English everywhere**: PHPDoc, inline comments, exception messages, and Pest `describe`/`it` descriptions. Some test fixture values (topic URIs like `com.myapp.somma`, payload strings) are still Italian — that is data, leave it unless the test is being rewritten anyway.
 - PHP 8.2+. Constructor property promotion with `private readonly`; typed params/returns/properties always; enums for closed sets; named arguments when wiring factories.
 - Files do **not** declare `strict_types` (despite `CONTRIBUTING.md`). Don't add it piecemeal; that is a codebase-wide decision.
 - PHPDoc on every class and public method, with array shapes (`array<string, mixed>`) — PHPStan level 6 requires iterable value types. Long classes group methods under `// ----` banner comments; follow the existing layout.
