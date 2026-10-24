@@ -15,7 +15,8 @@ enum AuthMethod: string
 
     /**
      * Ticket-based authentication.
-     * Uses a single pre-shared secret (e.g., an API key or a static token).
+     * The ticket is sent to the router as-is: a static secret (e.g., an API key) or a
+     * dynamic token such as a short-lived JWT supplied by a TicketProviderContract.
      */
     case Ticket = 'ticket';
 

@@ -7,6 +7,10 @@ and the project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+### Added
+
+- **Dynamic ticket authentication:** `TicketAuthenticator` now also accepts a `TicketProviderContract`, which is asked for a ticket on every handshake (the first connection and every reconnection), so short-lived tokens such as JWTs can be used. Static tickets keep working unchanged through the new `StaticTicketProvider`.
+
 ### Fixed
 
 - **Automatic reconnect:** reconnecting after a dropped connection no longer fails on every attempt. A transport failure now closes the session, and a failed handshake leaves it closed, so `hello()` can run again.

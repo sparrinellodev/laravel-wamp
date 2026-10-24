@@ -1,7 +1,10 @@
 <?php
 
 use Hermod\LaravelWamp\Auth\AnonymousAuthenticator;
+use Hermod\LaravelWamp\Auth\TicketAuthenticator;
 use Hermod\LaravelWamp\Client\WampClient;
+use Hermod\LaravelWamp\Contracts\AuthenticatorContract;
+use Hermod\LaravelWamp\Contracts\TicketProviderContract;
 use Hermod\LaravelWamp\Contracts\TransportContract;
 use Hermod\LaravelWamp\Exceptions\ReconnectException;
 use Hermod\LaravelWamp\Exceptions\TransportException;
@@ -94,9 +97,13 @@ function replyToLast(MessageType $request, MessageType $reply, int $id): Closure
 /**
  * Wire a WampClient the same way WampClientFactory does, on top of the given transport.
  */
-function clientOver(TransportContract $transport, int $maxAttempts = 3, bool $reconnect = true): WampClient
-{
-    $session = new WampSession($transport, new JsonSerializer, 'realm1', new AnonymousAuthenticator);
+function clientOver(
+    TransportContract $transport,
+    int $maxAttempts = 3,
+    bool $reconnect = true,
+    AuthenticatorContract $authenticator = new AnonymousAuthenticator,
+): WampClient {
+    $session = new WampSession($transport, new JsonSerializer, 'realm1', $authenticator);
     $ids = new RequestIdGenerator;
     $caller = new Caller($session, new PendingCallRegistry($ids));
     $callee = new Callee($session, $ids);
@@ -143,6 +150,33 @@ describe('WampClient — reconnect', function () {
             ->and($transport->sentOfType(MessageType::SUBSCRIBE))->toHaveCount(2)
             ->and($client->getRegistrations())->toHaveKey('com.myapp.sum')
             ->and($client->getSubscriptions())->toHaveKey('com.myapp.events');
+    });
+
+    it('asks the ticket provider for a fresh ticket on every reconnection', function () {
+        $provider = new class implements TicketProviderContract
+        {
+            public int $issued = 0;
+
+            public function ticket(?string $authId, array $extra = []): string
+            {
+                return 'jwt-'.++$this->issued;
+            }
+        };
+        $transport = new ScriptedTransport([
+            [4, 'ticket', []], // CHALLENGE
+            [2, 1001, []],
+            new TransportException('Connection reset by peer'),
+            [4, 'ticket', []], // CHALLENGE for the new session
+            [2, 2002, []],
+            [6, [], 'wamp.close.system_shutdown'],
+        ]);
+        $client = clientOver($transport, authenticator: new TicketAuthenticator('backend', $provider));
+
+        $client->connect();
+        $client->listen();
+
+        expect(array_column($transport->sentOfType(MessageType::AUTHENTICATE), 1))
+            ->toBe(['jwt-1', 'jwt-2']);
     });
 
     it('retries when the handshake fails during reconnection', function () {
