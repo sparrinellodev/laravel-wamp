@@ -109,4 +109,29 @@ describe('Callee', function () {
         expect($this->callee->getRegistrations())
             ->toHaveKey('com.myapp.doppio');
     });
+
+    it('flush() returns active and pending handlers and clears the local state', function () {
+        $this->session->shouldReceive('send')->times(4);
+
+        $sum = fn ($args) => $args[0] + $args[1];
+        $double = fn ($args) => $args[0] * 2;
+
+        $this->callee->register('com.myapp.somma', $sum);
+        $this->callee->register('com.myapp.doppio', $double);
+
+        // Confirm only the first registration: the second one stays pending
+        $pendingData = (new ReflectionProperty($this->callee, 'pendingRegistrations'))
+            ->getValue($this->callee);
+        $this->callee->onRegistered(WampMessage::fromArray([65, $pendingData['com.myapp.somma']['requestId'], 1001]));
+
+        expect($this->callee->flush())->toBe([
+            'com.myapp.somma' => $sum,
+            'com.myapp.doppio' => $double,
+        ])
+            ->and($this->callee->getRegistrations())->toBe([]);
+
+        // Both procedures can be registered again on a new session
+        $this->callee->register('com.myapp.somma', $sum);
+        $this->callee->register('com.myapp.doppio', $double);
+    });
 });

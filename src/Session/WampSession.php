@@ -8,6 +8,7 @@ use Hermod\LaravelWamp\Contracts\SessionContract;
 use Hermod\LaravelWamp\Contracts\TransportContract;
 use Hermod\LaravelWamp\Exceptions\AuthenticationException;
 use Hermod\LaravelWamp\Exceptions\SessionException;
+use Hermod\LaravelWamp\Exceptions\TransportException;
 use Hermod\LaravelWamp\Exceptions\WampProtocolException;
 use Hermod\LaravelWamp\Message\MessageFactory;
 use Hermod\LaravelWamp\Message\MessageType;
@@ -54,27 +55,38 @@ class WampSession implements SessionContract
     /**
      * Open the underlying transport connection and initiate the WAMP session handshake (HELLO).
      *
+     * If the handshake fails for any reason, the session is left Closed so that it can be retried.
+     *
      * @throws \Hermod\LaravelWamp\Exceptions\SessionException If session is not in a Closed state or handshake fails.
      */
     public function hello(): void
     {
         $this->assertState(SessionState::Closed, 'hello');
 
-        // Open the underlying transport connection
-        $this->transport->connect();
-        $this->state = SessionState::Establishing;
+        try {
+            // Open the underlying transport connection
+            $this->transport->connect();
+            $this->state = SessionState::Establishing;
 
-        // Send HELLO message with authentication details
-        $this->sendMessage(
-            MessageFactory::helloWithAuth(
-                realm: $this->realm,
-                authMethod: $this->authenticator->method()->value,
-                authId: $this->authenticator->authId(),
-                authExtra: $this->authenticator->authExtra(),
-            ),
-        );
+            // Send HELLO message with authentication details
+            $this->sendMessage(
+                MessageFactory::helloWithAuth(
+                    realm: $this->realm,
+                    authMethod: $this->authenticator->method()->value,
+                    authId: $this->authenticator->authId(),
+                    authExtra: $this->authenticator->authExtra(),
+                ),
+            );
 
-        $this->handleAuthSequence();
+            $this->handleAuthSequence();
+        } catch (Throwable $e) {
+            // A failed handshake must leave the session Closed, so that hello() can be retried
+            if ($this->state !== SessionState::Closed) {
+                $this->closeSession();
+            }
+
+            throw $e;
+        }
     }
 
     /**
@@ -111,11 +123,20 @@ class WampSession implements SessionContract
      * @param  \Hermod\LaravelWamp\Message\WampMessage  $message  The message to send.
      *
      * @throws \Hermod\LaravelWamp\Exceptions\SessionException If session is not established.
+     * @throws \Hermod\LaravelWamp\Exceptions\TransportException If the connection is lost; the session is closed first.
      */
     public function send(WampMessage $message): void
     {
         $this->assertState(SessionState::Established, 'send');
-        $this->sendMessage($message);
+
+        try {
+            $this->sendMessage($message);
+        } catch (TransportException $e) {
+            // The connection is gone: mark the session as Closed before propagating
+            $this->closeSession();
+
+            throw $e;
+        }
     }
 
     /**
@@ -124,12 +145,20 @@ class WampSession implements SessionContract
      * @return WampMessage The received message instance.
      *
      * @throws \Hermod\LaravelWamp\Exceptions\SessionException If session is not established.
+     * @throws \Hermod\LaravelWamp\Exceptions\TransportException If the connection is lost; the session is closed first.
      */
     public function receive(): WampMessage
     {
         $this->assertState(SessionState::Established, 'receive');
 
-        return $this->receiveMessage();
+        try {
+            return $this->receiveMessage();
+        } catch (TransportException $e) {
+            // The connection is gone: mark the session as Closed before propagating
+            $this->closeSession();
+
+            throw $e;
+        }
     }
 
     // -------------------------------------------------------------------------

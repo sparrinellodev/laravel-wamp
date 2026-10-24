@@ -157,4 +157,36 @@ describe('PendingSubscriptionRegistry', function () {
             expect($this->registry->getAll())->toBe([]);
         });
     });
+
+    // -------------------------------------------------------------------------
+    // flush()
+    // -------------------------------------------------------------------------
+
+    describe('flush()', function () {
+
+        it('returns active and pending subscriptions and clears the state', function () {
+            $active = fn () => 'active';
+            $pending = fn () => 'pending';
+
+            $this->registry->registerPending(1, 'com.myapp.uno', $active);
+            $this->registry->confirmSubscription(1, 1001);
+            $this->registry->registerPending(2, 'com.myapp.due', $pending);
+
+            expect($this->registry->flush())->toBe([
+                'com.myapp.uno' => $active,
+                'com.myapp.due' => $pending,
+            ])
+                ->and($this->registry->getAll())->toBe([])
+                ->and($this->registry->isTopicSubscribed('com.myapp.uno'))->toBeFalse()
+                ->and($this->registry->isTopicSubscribed('com.myapp.due'))->toBeFalse();
+        });
+
+        it('leaves out topics with a pending unsubscription', function () {
+            $this->registry->registerPending(1, 'com.myapp.uno', fn () => null);
+            $this->registry->confirmSubscription(1, 1001);
+            $this->registry->registerPendingUnsubscribe(2, 'com.myapp.uno');
+
+            expect($this->registry->flush())->toBe([]);
+        });
+    });
 });

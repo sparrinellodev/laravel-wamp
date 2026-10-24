@@ -119,6 +119,23 @@ class Subscriber implements SubscriberContract
     }
 
     // -------------------------------------------------------------------------
+    // Session Recovery
+    // -------------------------------------------------------------------------
+
+    /**
+     * Forget every subscription, active or pending, and return their handlers.
+     *
+     * Used after the connection is lost: the router has already dropped the old
+     * session's subscriptions, so they must be subscribed again on a new session.
+     *
+     * @return array<string, callable> Topic URI → handler.
+     */
+    public function flush(): array
+    {
+        return $this->registry->flush();
+    }
+
+    // -------------------------------------------------------------------------
     // Incoming Message Handlers
     // -------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@ use Hermod\LaravelWamp\Exceptions\RpcException;
 use Hermod\LaravelWamp\Message\MessageFactory;
 use Hermod\LaravelWamp\Message\WampMessage;
 use Hermod\LaravelWamp\Session\WampSession;
+use Throwable;
 
 /**
  * Manages WAMP remote procedure calls (RPC) for the Caller role.
@@ -71,6 +72,20 @@ class Caller implements CallerContract
 
         // 3. Return the Future — completes when RESULT or ERROR is processed
         return $pending->getFuture();
+    }
+
+    // -------------------------------------------------------------------------
+    // Connection Loss
+    // -------------------------------------------------------------------------
+
+    /**
+     * Reject every in-flight call, typically because the connection to the router was lost.
+     *
+     * @param  Throwable  $e  The reason the calls can no longer complete.
+     */
+    public function rejectAll(Throwable $e): void
+    {
+        $this->registry->rejectAll($e);
     }
 
     // -------------------------------------------------------------------------

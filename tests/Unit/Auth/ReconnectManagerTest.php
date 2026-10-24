@@ -111,6 +111,27 @@ describe('ReconnectManager', function () {
         expect($attempts)->toBe(3);
     });
 
+    it('counts a failure in onSuccess as a failed attempt', function () {
+        $manager = new ReconnectManager(
+            strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
+            enabled: true,
+        );
+
+        $connects = 0;
+
+        expect(function () use ($manager, &$connects) {
+            $manager->reconnect(
+                connectFn: function () use (&$connects) {
+                    $connects++;
+                },
+                onSuccess: fn () => throw new RuntimeException('Restoration failed'),
+            );
+        })->toThrow(ReconnectException::class, 'Restoration failed');
+
+        expect($connects)->toBe(3)
+            ->and($manager->isReconnecting())->toBeFalse();
+    });
+
     // -------------------------------------------------------------------------
     // Reconnect disabled
     // -------------------------------------------------------------------------

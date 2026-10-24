@@ -10,6 +10,7 @@ use Hermod\LaravelWamp\Message\MessageFactory;
 use Hermod\LaravelWamp\Message\WampMessage;
 use Hermod\LaravelWamp\Rpc\RequestIdGenerator;
 use Hermod\LaravelWamp\Session\WampSession;
+use Throwable;
 
 /**
  * Handles publishing WAMP events to topics with optional acknowledgement support.
@@ -87,6 +88,26 @@ class Publisher implements PublisherContract
         );
 
         return $deferred->getFuture();
+    }
+
+    // -------------------------------------------------------------------------
+    // Connection Loss
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fail every acknowledgement still awaited, typically because the connection to the router was lost.
+     *
+     * @param  Throwable  $e  The reason the publications can no longer be acknowledged.
+     */
+    public function rejectAll(Throwable $e): void
+    {
+        foreach ($this->pendingAcks as $deferred) {
+            // The publisher may never await this future: don't report the error to the event loop
+            $deferred->getFuture()->ignore();
+            $deferred->error($e);
+        }
+
+        $this->pendingAcks = [];
     }
 
     // -------------------------------------------------------------------------

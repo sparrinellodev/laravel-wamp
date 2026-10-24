@@ -5,6 +5,16 @@ All relevant changes to Hermod are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/it/1.0.0/),
 and the project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Automatic reconnect:** reconnecting after a dropped connection no longer fails on every attempt. A transport failure now closes the session, and a failed handshake leaves it closed, so `hello()` can run again.
+- Procedures and subscriptions — including those still awaiting the router's confirmation — are restored on the new session instead of failing with "already registered" / "already subscribed".
+- In-flight RPC calls and `publishWithAck()` acknowledgements are rejected with `WampClientException` when the connection drops, instead of never completing.
+- `listen()` throws `WampClientException` (with the `ReconnectException` as previous) once reconnection attempts are exhausted, and `isConnected()` returns `false` after a connection loss.
+- A failure while restoring registrations or subscriptions now counts as a failed reconnection attempt instead of retrying forever.
+
 ## [2.0.0] - 2026-08-07
 
 ### Changed (Breaking Changes)

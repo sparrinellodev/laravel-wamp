@@ -88,6 +88,8 @@ class PendingCallRegistry
     public function rejectAll(\Throwable $e): void
     {
         foreach ($this->pending as $call) {
+            // The caller may never await this future: don't report the error to the event loop
+            $call->getFuture()->ignore();
             $call->reject($e);
         }
 

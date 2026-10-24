@@ -157,6 +157,41 @@ class PendingSubscriptionRegistry
     }
 
     // -------------------------------------------------------------------------
+    // Session Recovery
+    // -------------------------------------------------------------------------
+
+    /**
+     * Clear all subscription state and return the handlers to subscribe again on a new session.
+     *
+     * Active and pending subscriptions are returned; topics with a pending
+     * unsubscription are left out, since the application asked to leave them.
+     *
+     * @return array<string, callable> Topic URI → handler.
+     */
+    public function flush(): array
+    {
+        $handlers = [];
+
+        foreach ($this->subscriptions as $topic => $subscription) {
+            $handlers[$topic] = $subscription->handler;
+        }
+
+        foreach ($this->pending as $pending) {
+            $handlers[$pending['topic']] = $pending['handler'];
+        }
+
+        foreach ($this->pendingUnsubscribes as $pendingUnsubscribe) {
+            unset($handlers[$pendingUnsubscribe['topic']]);
+        }
+
+        $this->subscriptions = [];
+        $this->pending = [];
+        $this->pendingUnsubscribes = [];
+
+        return $handlers;
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 

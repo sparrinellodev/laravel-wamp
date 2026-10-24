@@ -274,4 +274,22 @@ describe('Subscriber', function () {
                 ->toHaveKeys(['com.myapp.uno', 'com.myapp.due']);
         });
     });
+
+    // -------------------------------------------------------------------------
+    // flush()
+    // -------------------------------------------------------------------------
+
+    describe('flush()', function () {
+
+        it('returns the handlers and lets the same topic be subscribed again', function () {
+            $this->session->shouldReceive('send')->twice();
+
+            $handler = fn () => null;
+            $this->subscriber->subscribe('com.myapp.test', $handler);
+
+            expect($this->subscriber->flush())->toBe(['com.myapp.test' => $handler]);
+
+            $this->subscriber->subscribe('com.myapp.test', $handler);
+        });
+    });
 });

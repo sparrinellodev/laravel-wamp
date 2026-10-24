@@ -1,9 +1,11 @@
 <?php
 
+use Amp\DeferredFuture;
 use Hermod\LaravelWamp\Exceptions\RpcException;
 use Hermod\LaravelWamp\Rpc\PendingCall;
 use Hermod\LaravelWamp\Rpc\PendingCallRegistry;
 use Hermod\LaravelWamp\Rpc\RequestIdGenerator;
+use Revolt\EventLoop;
 
 describe('PendingCallRegistry', function () {
 
@@ -62,5 +64,27 @@ describe('PendingCallRegistry', function () {
         $this->registry->rejectAll($error);
 
         expect($this->registry->isEmpty())->toBeTrue();
+    });
+
+    it('rejects calls nobody awaits without reporting them to the event loop', function () {
+        $reported = [];
+        EventLoop::setErrorHandler(function (Throwable $e) use (&$reported) {
+            $reported[] = $e;
+        });
+
+        try {
+            // Control: an errored future nobody awaits IS reported to the event loop
+            (new DeferredFuture)->error(new RuntimeException('control'));
+            \Amp\delay(0);
+            expect($reported)->toHaveCount(1);
+
+            // A call rejected by rejectAll() and never awaited is not
+            $this->registry->register('com.myapp.uno');
+            $this->registry->rejectAll(new RuntimeException('Connection lost'));
+            \Amp\delay(0);
+            expect($reported)->toHaveCount(1);
+        } finally {
+            EventLoop::setErrorHandler(null);
+        }
     });
 });

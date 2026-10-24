@@ -52,11 +52,11 @@ class ReconnectManager
     /**
      * Execute the reconnection loop using the configured strategy.
      *
-     * Repeatedly invokes the connection callback with delayed intervals until connection succeeds 
-     * or all retry attempts are exhausted.
+     * Repeatedly invokes the connection callback with delayed intervals until connection succeeds
+     * or all retry attempts are exhausted. A failure in either callback counts as a failed attempt.
      *
      * @param  callable  $connectFn  The callback function attempting to establish connection.
-     * @param  callable  $onSuccess  The callback executed upon a successful reconnection.
+     * @param  callable  $onSuccess  The callback executed upon a successful reconnection (e.g. restoring registrations).
      *
      * @throws \Hermod\LaravelWamp\Exceptions\ReconnectException If automatic reconnection is disabled or all attempts fail.
      */
@@ -80,11 +80,7 @@ class ReconnectManager
 
             try {
                 $connectFn();
-                $this->strategy->reset();
-                $this->reconnecting = false;
                 $onSuccess();
-
-                return;
             } catch (Throwable $e) {
                 $this->strategy->recordFailure();
 
@@ -96,7 +92,16 @@ class ReconnectManager
                         previous: $e,
                     );
                 }
+
+                continue;
             }
+
+            // Reset only once the session is fully restored, so that a failing
+            // onSuccess still counts towards the attempt limit
+            $this->strategy->reset();
+            $this->reconnecting = false;
+
+            return;
         }
 
         $this->reconnecting = false;
