@@ -94,6 +94,6 @@ describe('AuthenticatorFactory', function () {
 
     it('lancia eccezione per metodo non supportato', function () {
         expect(fn () => $this->factory->make(['method' => 'oauth2']))
-            ->toThrow(AuthenticationException::class, 'non supportato');
+            ->toThrow(AuthenticationException::class, 'Unsupported authentication method');
     });
 });

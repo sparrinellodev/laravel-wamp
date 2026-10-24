@@ -55,5 +55,5 @@ describe('TransportFactory', function () {
             url: 'tcp://localhost:8081',
             serializer: $this->serializer,
         );
-    })->throws(TransportException::class, 'non supportato');
+    })->throws(TransportException::class, 'Unsupported transport type');
 });

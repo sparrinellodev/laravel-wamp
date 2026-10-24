@@ -27,7 +27,7 @@ describe('JsonSerializer', function () {
 
     it('lancia eccezione per JSON non array', function () {
         $this->serializer->deserialize('"stringa semplice"');
-    })->throws(SerializationException::class, 'non è un array valido');
+    })->throws(SerializationException::class, 'is not a valid array');
 
     it('restituisce il subprotocol corretto', function () {
         expect($this->serializer->subprotocol())->toBe('wamp.2.json');

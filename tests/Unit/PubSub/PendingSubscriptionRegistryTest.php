@@ -51,7 +51,7 @@ describe('PendingSubscriptionRegistry', function () {
 
         it('lancia eccezione per requestId sconosciuto', function () {
             $this->registry->confirmSubscription(99999, 1001);
-        })->throws(PubSubException::class, 'Nessuna sottoscrizione pendente');
+        })->throws(PubSubException::class, 'No pending subscription found');
 
         it('rimuove la sottoscrizione dai pending dopo la conferma', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);

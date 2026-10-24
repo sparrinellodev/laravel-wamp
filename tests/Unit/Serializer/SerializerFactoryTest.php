@@ -24,10 +24,10 @@ describe('SerializerFactory', function () {
 
     it('lancia eccezione per driver sconosciuto', function () {
         $this->factory->make('driver-inesistente');
-    })->throws(SerializationException::class, 'non supportato');
+    })->throws(SerializationException::class, 'is not supported');
 
     it('lancia eccezione per classe inesistente', function () {
         $factory = new SerializerFactory(['fake' => 'Hermod\\Serializer\\FakeSerializer']);
         $factory->make('fake');
-    })->throws(SerializationException::class, 'non trovata');
+    })->throws(SerializationException::class, 'not found');
 });

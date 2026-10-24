@@ -106,7 +106,7 @@ describe('ReconnectManager', function () {
                 },
                 onSuccess: fn () => null,
             );
-        })->toThrow(ReconnectException::class, 'Reconnect fallito dopo');
+        })->toThrow(ReconnectException::class, 'Reconnect failed after');
 
         expect($attempts)->toBe(3);
     });
@@ -124,7 +124,7 @@ describe('ReconnectManager', function () {
         expect(fn () => $manager->reconnect(
             connectFn: fn () => null,
             onSuccess: fn () => null,
-        ))->toThrow(ReconnectException::class, 'disabilitato');
+        ))->toThrow(ReconnectException::class, 'is disabled');
     });
 
     // -------------------------------------------------------------------------

@@ -54,7 +54,7 @@ describe('RawSocketHandshake', function () {
 
         it('lancia TransportException per serializzatore non supportato', function () {
             RawSocketHandshake::build('wamp.2.sconosciuto');
-        })->throws(TransportException::class, 'non supportato');
+        })->throws(TransportException::class, 'Unsupported serializer for RawSocket');
     });
 
     // -------------------------------------------------------------------------
@@ -90,7 +90,7 @@ describe('RawSocketHandshake', function () {
         it('lancia TransportException per magic byte errato', function () {
             $response = pack('C4', 0x00, 0xF1, 0x00, 0x00); // magic errato
             RawSocketHandshake::parse($response);
-        })->throws(TransportException::class, 'Magic byte');
+        })->throws(TransportException::class, 'Invalid RawSocket magic byte');
 
         it('lancia TransportException quando il router rifiuta la connessione', function () {
             // maxLength=0 significa errore, il nibble basso è il codice errore
@@ -98,6 +98,6 @@ describe('RawSocketHandshake', function () {
             $response = pack('C4', 0x7F, $byte1, 0x00, 0x00);
 
             RawSocketHandshake::parse($response);
-        })->throws(TransportException::class, 'rifiutato');
+        })->throws(TransportException::class, 'refused connection');
     });
 });

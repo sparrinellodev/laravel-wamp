@@ -37,7 +37,7 @@ describe('PendingCallRegistry', function () {
 
     it('lancia eccezione per requestId inesistente', function () {
         $this->registry->get(99999);
-    })->throws(RpcException::class, 'Nessuna chiamata pendente');
+    })->throws(RpcException::class, 'No pending call found');
 
     it('tiene traccia del conteggio corretto', function () {
         expect($this->registry->count())->toBe(0)

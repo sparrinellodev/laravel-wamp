@@ -36,7 +36,7 @@ describe('Callee', function () {
         $this->callee->register('com.myapp.somma', fn () => null);
 
         expect(fn () => $this->callee->register('com.myapp.somma', fn () => null))
-            ->toThrow(CalleeException::class, 'già registrata');
+            ->toThrow(CalleeException::class, 'is already registered');
     });
 
     it('esegue l\'handler e invia YIELD quando riceve INVOCATION', function () {

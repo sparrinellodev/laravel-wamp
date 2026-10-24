@@ -55,7 +55,7 @@ describe('WampCraAuthenticator', function () {
 
     it('lancia eccezione per challenge vuota', function () {
         expect(fn () => $this->auth->handleChallenge(''))
-            ->toThrow(AuthenticationException::class, 'challenge vuota');
+            ->toThrow(AuthenticationException::class, 'Empty challenge');
     });
 
     describe('WAMP-CRA salted (con PBKDF2)', function () {

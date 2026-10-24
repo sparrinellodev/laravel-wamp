@@ -22,7 +22,7 @@ describe('WampMessage', function () {
 
         it('lancia eccezione per tipo sconosciuto', function () {
             WampMessage::fromArray([999, 'dato']);
-        })->throws(InvalidMessageException::class, 'sconosciuto: 999');
+        })->throws(InvalidMessageException::class, 'Unknown WAMP message type identifier: 999');
 
         it('restituisce null per indice inesistente', function () {
             $message = WampMessage::fromArray([2, 123456, []]);

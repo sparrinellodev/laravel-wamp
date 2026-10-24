@@ -62,7 +62,7 @@ describe('RawSocketFrame', function () {
             // 0xFFFFFF + 1 = troppo grande
             $payload = str_repeat('X', 0xFFFFFF + 1);
             RawSocketFrame::encode($payload);
-        })->throws(TransportException::class, 'troppo grande');
+        })->throws(TransportException::class, 'Payload too large');
     });
 
     // -------------------------------------------------------------------------

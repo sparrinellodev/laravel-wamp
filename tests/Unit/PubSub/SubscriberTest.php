@@ -61,7 +61,7 @@ describe('Subscriber', function () {
             $this->subscriber->subscribe('com.myapp.notifiche', fn () => null);
 
             expect(fn () => $this->subscriber->subscribe('com.myapp.notifiche', fn () => null))
-                ->toThrow(PubSubException::class, 'Già sottoscritto');
+                ->toThrow(PubSubException::class, 'Already subscribed');
         });
     });
 
@@ -210,7 +210,7 @@ describe('Subscriber', function () {
 
         it('lancia eccezione se il topic non è sottoscritto', function () {
             expect(fn () => $this->subscriber->unsubscribe('com.myapp.inesistente'))
-                ->toThrow(PubSubException::class, 'Nessuna sottoscrizione attiva');
+                ->toThrow(PubSubException::class, 'No active subscription found');
         });
     });
 

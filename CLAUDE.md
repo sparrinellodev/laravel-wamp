@@ -53,7 +53,6 @@ WampClient — façade over all of the above + ReconnectManager
 
 ## Known state (as of 2026-10-10 — remove items once fixed)
 
-- 18 of 233 unit tests fail: commit `9dbe649` translated exception messages to English but the tests still assert the Italian text.
 - `pint --test` flags ~65 files. Write new code Pint-clean, but don't reformat untouched files inside a feature/fix change; a formatting-only commit is planned separately.
 - PHPStan reports 17 errors (mostly missing iterable types in the `Wamp` facade `@method` tags; `CborSerializer.php:279` calls a non-existent `CBORObject::normalize()`; an unused `$maxMessageSize` in `RawSocketTransport`; the `ignoreErrors` pattern in `phpstan.neon` no longer matches).
 - `composer.json` `extra.laravel.aliases.Wamp` points to `Hermod\Laravel\Facades\Wamp`; the real class is `Hermod\LaravelWamp\Laravel\Facades\Wamp`.
