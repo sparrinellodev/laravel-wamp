@@ -4,7 +4,16 @@ use Hermod\LaravelWamp\Auth\AnonymousAuthenticator;
 use Hermod\LaravelWamp\Auth\AuthenticatorFactory;
 use Hermod\LaravelWamp\Auth\TicketAuthenticator;
 use Hermod\LaravelWamp\Auth\WampCraAuthenticator;
+use Hermod\LaravelWamp\Contracts\TicketProviderContract;
 use Hermod\LaravelWamp\Exceptions\AuthenticationException;
+
+class FixedTicketProvider implements TicketProviderContract
+{
+    public function ticket(?string $authId, array $extra = []): string
+    {
+        return 'fixed-jwt';
+    }
+}
 
 describe('AuthenticatorFactory', function () {
 
@@ -57,6 +66,84 @@ describe('AuthenticatorFactory', function () {
             'authid' => 'user123',
             // ticket missing
         ]))->toThrow(AuthenticationException::class, 'ticket');
+    });
+
+    it('creates a TicketAuthenticator with a ticket provider built by the resolver', function () {
+        $resolved = [];
+        $factory = new AuthenticatorFactory(
+            resolver: function (string $class) use (&$resolved) {
+                $resolved[] = $class;
+
+                return new $class;
+            },
+        );
+
+        $auth = $factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket_provider' => FixedTicketProvider::class,
+        ]);
+
+        expect($auth->handleChallenge(''))->toBe('fixed-jwt')
+            ->and($resolved)->toBe([FixedTicketProvider::class]);
+    });
+
+    it('instantiates the ticket provider directly when no resolver is given', function () {
+        $auth = $this->factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket_provider' => FixedTicketProvider::class,
+        ]);
+
+        expect($auth->handleChallenge(''))->toBe('fixed-jwt');
+    });
+
+    it('throws if both ticket and ticket_provider are set', function () {
+        expect(fn () => $this->factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket' => 'my-ticket',
+            'ticket_provider' => FixedTicketProvider::class,
+        ]))->toThrow(AuthenticationException::class, 'but not both');
+    });
+
+    it('treats an empty ticket as missing', function () {
+        expect(fn () => $this->factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket' => '',
+        ]))->toThrow(AuthenticationException::class, "either a 'ticket' or a 'ticket_provider'");
+    });
+
+    it('throws if the ticket provider class does not exist', function () {
+        expect(fn () => $this->factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket_provider' => 'App\Wamp\MissingTicketProvider',
+        ]))->toThrow(AuthenticationException::class, 'not found');
+    });
+
+    it('throws if the ticket provider does not implement TicketProviderContract', function () {
+        expect(fn () => $this->factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket_provider' => stdClass::class,
+        ]))->toThrow(AuthenticationException::class, 'must implement');
+    });
+
+    it('wraps failures while creating the ticket provider', function () {
+        $factory = new AuthenticatorFactory(
+            resolver: fn (string $class) => throw new RuntimeException('Unresolvable dependency'),
+        );
+
+        expect(fn () => $factory->make([
+            'method' => 'ticket',
+            'authid' => 'user123',
+            'ticket_provider' => FixedTicketProvider::class,
+        ]))->toThrow(function (AuthenticationException $e) {
+            expect($e->getMessage())->toContain('could not be created')
+                ->and($e->getPrevious())->toBeInstanceOf(RuntimeException::class);
+        });
     });
 
     // -------------------------------------------------------------------------

@@ -99,6 +99,33 @@ return [
             ],
         ],
 
+        // Example connection using a dynamic ticket (e.g., a short-lived JWT).
+        // 'ticket_provider' is a class of your application implementing
+        // Hermod\LaravelWamp\Contracts\TicketProviderContract: it is resolved from
+        // the service container and asked for a ticket on every handshake.
+        'jwt' => [
+            'transport' => 'websocket',
+            'url' => env('WAMP_URL', 'ws://localhost:8080/ws'),
+            'realm' => env('WAMP_REALM', 'realm1'),
+            'serializer' => env('WAMP_SERIALIZER', 'json'),
+            'auth' => [
+                'method' => 'ticket',
+                'authid' => env('WAMP_AUTH_ID'),
+                'ticket_provider' => 'App\Wamp\JwtTicketProvider',
+            ],
+            'reconnect' => [
+                'enabled' => true,
+                'max_attempts' => 5,
+                'base_delay' => 1.0,
+                'max_delay' => 30.0,
+                'multiplier' => 2.0,
+            ],
+            'heartbeat' => [
+                'enabled' => true,
+                'interval' => 30,
+            ],
+        ],
+
         // Example connection using WAMP-CRA (Challenge-Response Authentication)
         'cra' => [
             'transport' => 'websocket',

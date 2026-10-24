@@ -68,6 +68,59 @@ WAMP_AUTH_ID=myuser
 WAMP_AUTH_TICKET=my-secret-token
 ```
 
+### Dynamic Ticket Authentication (e.g., JWT)
+
+When the ticket is a short-lived token, point the connection to a class that supplies it,
+instead of a static `ticket`:
+
+```php
+// config/wamp.php
+'auth' => [
+    'method'          => 'ticket',
+    'authid'          => env('WAMP_AUTH_ID'),
+    'ticket_provider' => App\Wamp\JwtTicketProvider::class,
+],
+```
+
+```php
+namespace App\Wamp;
+
+use Hermod\LaravelWamp\Contracts\TicketProviderContract;
+use Illuminate\Support\Facades\Http;
+
+class JwtTicketProvider implements TicketProviderContract
+{
+    public function ticket(?string $authId, array $extra = []): string
+    {
+        // e.g. OAuth2 client credentials against your identity provider
+        return Http::asForm()
+            ->post(config('services.wamp.token_url'), [
+                'grant_type'    => 'client_credentials',
+                'client_id'     => config('services.wamp.client_id'),
+                'client_secret' => config('services.wamp.client_secret'),
+            ])
+            ->throw()
+            ->json('access_token');
+    }
+}
+```
+
+- `ticket` and `ticket_provider` are mutually exclusive.
+- The provider is resolved from the service container, so constructor injection works.
+- It is called on **every handshake**: the first connection and every automatic reconnection,
+  so a reconnect after the token has expired gets a fresh one.
+- Laravel-WAMP does not cache tickets. If obtaining one is expensive (e.g. you call
+  `Wamp::connect()` on every HTTP request), cache it in the provider with a TTL shorter
+  than the token's `exp`.
+- The router checks the ticket only when the session opens: an established session is not
+  closed when the token expires.
+- If the provider throws or returns an empty string, the handshake fails with an
+  `AuthenticationException` (the original exception is available via `getPrevious()`);
+  during automatic reconnection the attempt is retried with backoff.
+- The provider runs synchronously during the handshake, so a slow token endpoint delays
+  the connection.
+- Use a class name, not a closure: closures cannot be stored by `php artisan config:cache`.
+
 ### Authentication with WAMP-CRA
 
 ```env
@@ -610,11 +663,11 @@ php artisan wamp:call com.myapp.somma 10 20 --connection=secure
 
 ## Authentication
 
-| Method      | Use case                           | Required configuration |
-| ----------- | ---------------------------------- | ---------------------- |
-| `anonymous` | Local development, closed networks | none                   |
-| `ticket`    | API key, static JWT                | `authid`, `ticket`     |
-| `wampcra`   | Secure authentication with HMAC    | `authid`, `secret`     |
+| Method      | Use case                           | Required configuration                  |
+| ----------- | ---------------------------------- | --------------------------------------- |
+| `anonymous` | Local development, closed networks | none                                    |
+| `ticket`    | API key, static or dynamic JWT     | `authid`, `ticket` or `ticket_provider` |
+| `wampcra`   | Secure authentication with HMAC    | `authid`, `secret`                      |
 
 ---
 

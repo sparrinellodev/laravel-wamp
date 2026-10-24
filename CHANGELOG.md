@@ -10,6 +10,11 @@ and the project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 ### Added
 
 - **Dynamic ticket authentication:** `TicketAuthenticator` now also accepts a `TicketProviderContract`, which is asked for a ticket on every handshake (the first connection and every reconnection), so short-lived tokens such as JWTs can be used. Static tickets keep working unchanged through the new `StaticTicketProvider`.
+- New `ticket_provider` option for ticket authentication in `config/wamp.php`: the class name of a `TicketProviderContract`, resolved from the service container. It is an alternative to `ticket` (setting both, or neither, is a configuration error), and a sample `jwt` connection shows how to use it.
+
+### Changed
+
+- An empty `ticket` (e.g. `WAMP_AUTH_TICKET=` left blank) is now reported as a configuration error when the client is built, instead of being sent to the router.
 
 ### Fixed
 
