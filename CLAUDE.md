@@ -28,7 +28,7 @@ WampClient — façade over all of the above + ReconnectManager
 - **Wiring** happens in two places: `Client/WampClientFactory::make(array $config)` builds the whole object graph per connection; `Laravel/WampServiceProvider` registers the factories as singletons and binds `WampClient` (alias `wamp.client`, used by the `Wamp` facade) from `config('wamp.default')`.
 - **No background event loop.** The client is pull-based: `call()`, `callAsync()` and `publishWithAck()` loop on `$session->receive()` → `$dispatcher->dispatch()` until their `Future` completes. `listen()` is the long-running loop used by `wamp:serve`. Any new request/acknowledge flow must pump messages the same way, or its Future never resolves.
 - **Errors**: `MessageDispatcher::dispatchError()` routes `ERROR` by the original request type (`$message->get(1)`). Router-initiated `GOODBYE` throws `WampProtocolException`, which `listen()` treats as a clean exit; `TransportException` triggers reconnect.
-- **Reconnect** (`ReconnectManager` + `ExponentialBackoffStrategy`) re-runs `hello()` and then re-registers every procedure and re-subscribes every topic captured before the drop.
+- **Reconnect**: on a `TransportException` the session closes itself (`send()`/`receive()`/a failed `hello()` always leave it `Closed`). `listen()` then rejects in-flight calls and acks (`rejectAll()`), takes registrations and subscriptions out of local state with `flush()`, and `ReconnectManager` retries `hello()` + restoration with exponential backoff. Restoration must stay idempotent — it re-flushes before re-registering, because a failed attempt is retried. Futures rejected on connection loss are marked `ignore()`d so unawaited ones don't surface as `UnhandledFutureError`.
 - **Laravel integration**: `wamp:serve` dispatches `WampServeStarted` so apps register handlers in a listener; every inbound `EVENT` also dispatches `WampEventReceived`. `wamp:call` is a CLI debugging aid.
 - **Auth**: `AuthMethod` enum (`anonymous`, `ticket`, `wampcra`) → `AuthenticatorFactory` → `AuthenticatorContract`. WAMP-CRA supports salted PBKDF2 keys.
 
@@ -55,6 +55,7 @@ WampClient — façade over all of the above + ReconnectManager
 - PHPStan reports 17 errors (mostly missing iterable types in the `Wamp` facade `@method` tags; `CborSerializer.php:279` calls a non-existent `CBORObject::normalize()`; an unused `$maxMessageSize` in `RawSocketTransport`; the `ignoreErrors` pattern in `phpstan.neon` no longer matches).
 - `composer.json` `extra.laravel.aliases.Wamp` points to `Hermod\Laravel\Facades\Wamp`; the real class is `Hermod\LaravelWamp\Laravel\Facades\Wamp`.
 - The `heartbeat` config section is not read anywhere in `src/`.
+- `WebSocketTransport` still has Italian comments and exception messages (missed by the English migration in `9dbe649`).
 - `amphp/socket` is used directly by `RawSocketTransport` but only arrives transitively; `suggest.ext-msgpack` is obsolete (msgpack is pure PHP via `rybakit/msgpack`).
 - `tests/Feature/ExampleTest.php` and `tests/Unit/ExampleTest.php` are scaffolding leftovers; the Feature one is not in any suite.
 - No CI workflow exists in `.github/`.
