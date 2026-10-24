@@ -5,13 +5,11 @@
 ## Commands
 
 ```bash
-./vendor/bin/pest --testsuite=Unit            # run tests (see note below)
-./vendor/bin/pest --testsuite=Unit --filter=Callee
+./vendor/bin/pest                             # all tests (single Unit suite)
+./vendor/bin/pest --filter=Callee             # a subset
 ./vendor/bin/phpstan analyse --memory-limit=1G   # level 6 + Larastan, src/ only
 ./vendor/bin/pint --test <file>               # style check (preset: laravel)
 ```
-
-Plain `./vendor/bin/pest` currently runs **zero tests and exits 2**: `phpunit.xml` and `tests/Pest.php` reference `tests/Integration/`, which does not exist. Always pass `--testsuite=Unit` until that directory is created or the reference removed.
 
 ## Architecture
 
