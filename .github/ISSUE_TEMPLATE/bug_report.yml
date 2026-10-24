@@ -1,5 +1,5 @@
 name: Bug Report
-description: Segnala un bug in Hermod
+description: Report a bug in Hermod
 title: "[Bug]: "
 labels: ["bug", "triage"]
 
@@ -7,73 +7,73 @@ body:
   - type: markdown
     attributes:
       value: |
-        Grazie per aver segnalato un bug! Compila il form con più dettagli possibili.
+        Thanks for reporting a bug! Please fill in the form with as much detail as possible.
 
   - type: input
     id: laravel-wamp-version
     attributes:
-      label: Versione Laravel-Wamp
-      placeholder: "es: 0.1.0"
+      label: Laravel-WAMP version
+      placeholder: "e.g. 2.0.0"
     validations:
       required: true
 
   - type: input
     id: php-version
     attributes:
-      label: Versione PHP
-      placeholder: "es: 8.2.0"
+      label: PHP version
+      placeholder: "e.g. 8.2.0"
     validations:
       required: true
 
   - type: input
     id: laravel-version
     attributes:
-      label: Versione Laravel
-      placeholder: "es: 12.0.0"
+      label: Laravel version
+      placeholder: "e.g. 12.0.0"
     validations:
       required: true
 
   - type: input
     id: router
     attributes:
-      label: Router WAMP utilizzato
-      placeholder: "es: Crossbar.io 23.x"
+      label: WAMP router
+      placeholder: "e.g. Crossbar.io 23.x"
     validations:
       required: false
 
   - type: textarea
     id: description
     attributes:
-      label: Descrizione del bug
-      description: Descrizione chiara e concisa del problema.
+      label: Bug description
+      description: A clear and concise description of the problem.
     validations:
       required: true
 
   - type: textarea
     id: reproduction
     attributes:
-      label: Passi per riprodurre
-      description: Come riprodurre il comportamento.
+      label: Steps to reproduce
+      description: How to reproduce the behavior.
       placeholder: |
-        1. Configura Hermod con...
-        2. Esegui...
-        3. Osserva l'errore...
+        1. Configure Hermod with...
+        2. Run...
+        3. See the error...
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: Comportamento atteso
-      description: Cosa dovrebbe succedere invece?
+      label: Expected behavior
+      description: What should happen instead?
     validations:
       required: true
 
   - type: textarea
     id: stacktrace
     attributes:
-      label: Stack trace / Log
-      description: Se disponibile, incolla qui lo stack trace.
+      label: Stack trace / Logs
+      description: If available, paste the stack trace here.
       render: shell
     validations:
       required: false

@@ -1,29 +1,29 @@
-## Descrizione
+## Description
 
-<!-- Descrivi le modifiche introdotte da questa PR -->
+<!-- Describe the changes introduced by this PR -->
 
-## Tipo di modifica
+## Type of change
 
 - [ ] Bug fix
-- [ ] Nuova feature
+- [ ] New feature
 - [ ] Breaking change
-- [ ] Aggiornamento documentazione
+- [ ] Documentation update
 - [ ] Refactoring
 
 ## Checklist
 
-- [ ] Ho letto le [linee guida per i contributi](CONTRIBUTING.md)
-- [ ] I test esistenti passano (`./vendor/bin/pest`)
-- [ ] Ho aggiunto test per le nuove funzionalità
-- [ ] Ho aggiornato la documentazione dove necessario
-- [ ] Ho aggiornato `CHANGELOG.md`
-- [ ] Il codice rispetta lo stile del progetto (`./vendor/bin/pint`)
-- [ ] PHPStan non rileva errori (`./vendor/bin/phpstan analyse`)
+- [ ] I have read the [contribution guidelines](CONTRIBUTING.md)
+- [ ] Existing tests pass (`./vendor/bin/pest`)
+- [ ] I have added tests for new features
+- [ ] I have updated the documentation where needed
+- [ ] I have updated `CHANGELOG.md`
+- [ ] The code follows the project style (`./vendor/bin/pint --test`)
+- [ ] PHPStan reports no errors (`./vendor/bin/phpstan analyse`)
 
-## Issue collegata
+## Related issue
 
 Closes #
 
-## Note aggiuntive
+## Additional notes
 
-<!-- Qualsiasi informazione aggiuntiva per i reviewer -->
+<!-- Anything else reviewers should know -->

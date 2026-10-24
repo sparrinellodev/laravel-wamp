@@ -1,5 +1,5 @@
 name: Feature Request
-description: Proponi una nuova funzionalità
+description: Propose a new feature
 title: "[Feature]: "
 labels: ["enhancement"]
 
@@ -7,42 +7,44 @@ body:
   - type: markdown
     attributes:
       value: |
-        Hai un'idea per migliorare Hermod? Raccontacela!
+        Have an idea to improve Hermod? Tell us about it!
 
   - type: textarea
     id: problem
     attributes:
-      label: Il problema che vuoi risolvere
-      description: Descrivi chiaramente il problema o la limitazione attuale.
-      placeholder: "Attualmente non è possibile..."
+      label: The problem you want to solve
+      description: Clearly describe the problem or the current limitation.
+      placeholder: "Currently it is not possible to..."
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Soluzione proposta
-      description: Descrivi come vorresti che funzionasse.
+      label: Proposed solution
+      description: Describe how you would like it to work.
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternative considerate
-      description: Hai considerato altre soluzioni?
+      label: Alternatives considered
+      description: Have you considered other solutions?
     validations:
       required: false
 
   - type: dropdown
-    id: phase
+    id: area
     attributes:
-      label: A quale fase appartiene questa feature?
+      label: Which area does this feature affect?
       options:
-        - "Fase 1 — RPC Core"
-        - "Fase 2 — PubSub"
-        - "Fase 3 — Auth & Resilienza"
-        - "Fase 4 — Serializzatori & Produzione"
-        - "Nuova fase"
+        - "RPC (Caller / Callee)"
+        - "PubSub (Publisher / Subscriber)"
+        - "Authentication & reconnect"
+        - "Serializers"
+        - "Transports (WebSocket / RawSocket)"
+        - "Laravel integration"
+        - "Other"
     validations:
       required: false

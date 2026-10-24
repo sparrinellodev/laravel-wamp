@@ -46,7 +46,7 @@ git checkout -b fix/bug-description
 
 ### Code
 
-- PHP 8.2+ with strict types
+- PHP 8.2+ (files do not declare `strict_types`; don't add it to individual files)
 - PSR-12 as the code standard (enforced by Pint)
 - Typed properties, return types, and parameters always declared
 - Prefer `readonly` where possible
