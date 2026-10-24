@@ -18,6 +18,7 @@ and the project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Fixed
 
+- The `default` connection in `config/wamp.php` now reads `WAMP_AUTH_ID`, `WAMP_AUTH_TICKET` and `WAMP_AUTH_SECRET`, so ticket and WAMP-CRA authentication can be enabled from `.env` alone, as the README describes. Applications that have already published `config/wamp.php` must add these keys to their `default` connection by hand.
 - **Automatic reconnect:** reconnecting after a dropped connection no longer fails on every attempt. A transport failure now closes the session, and a failed handshake leaves it closed, so `hello()` can run again.
 - Procedures and subscriptions — including those still awaiting the router's confirmation — are restored on the new session instead of failing with "already registered" / "already subscribed".
 - In-flight RPC calls and `publishWithAck()` acknowledgements are rejected with `WampClientException` when the connection drops, instead of never completing.

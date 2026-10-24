@@ -48,9 +48,14 @@ return [
             /*
              * Authentication Configuration
              * 'anonymous' is the default and requires no additional parameters.
+             * 'ticket' uses authid + ticket, 'wampcra' uses authid + secret;
+             * each method ignores the keys it does not need.
              */
             'auth' => [
                 'method' => env('WAMP_AUTH_METHOD', 'anonymous'),
+                'authid' => env('WAMP_AUTH_ID'),
+                'ticket' => env('WAMP_AUTH_TICKET'),
+                'secret' => env('WAMP_AUTH_SECRET'),
             ],
 
             /*
