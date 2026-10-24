@@ -16,7 +16,7 @@ describe('Callee', function () {
 
     afterEach(fn () => Mockery::close());
 
-    it('invia REGISTER alla sessione quando si registra una procedura', function () {
+    it('sends REGISTER to the session when a procedure is registered', function () {
         $this->session
             ->shouldReceive('send')
             ->once()
@@ -30,7 +30,7 @@ describe('Callee', function () {
         expect(true)->toBeTrue();
     });
 
-    it('lancia eccezione se si registra la stessa procedura due volte', function () {
+    it('throws when the same procedure is registered twice', function () {
         $this->session->shouldReceive('send')->once();
 
         $this->callee->register('com.myapp.somma', fn () => null);
@@ -39,12 +39,12 @@ describe('Callee', function () {
             ->toThrow(CalleeException::class, 'is already registered');
     });
 
-    it('esegue l\'handler e invia YIELD quando riceve INVOCATION', function () {
+    it('runs the handler and sends YIELD on INVOCATION', function () {
         $this->session->shouldReceive('send')->twice();
 
         $this->callee->register('com.myapp.somma', fn ($args) => $args[0] + $args[1]);
 
-        // Simuliamo REGISTERED dal router
+        // Simulate REGISTERED from the router
         // [65, requestId, registrationId]
         $pendingData = (new ReflectionProperty($this->callee, 'pendingRegistrations'))
             ->getValue($this->callee);
@@ -54,7 +54,7 @@ describe('Callee', function () {
         $registered = WampMessage::fromArray([65, $requestId, 1001]);
         $this->callee->onRegistered($registered);
 
-        // Verifichiamo che YIELD contenga il risultato corretto
+        // Check that YIELD carries the correct result
         $this->session
             ->shouldReceive('send')
             ->withArgs(function (WampMessage $message) {
@@ -62,13 +62,13 @@ describe('Callee', function () {
                     && $message->get(3) === [8];
             });
 
-        // Simuliamo INVOCATION dal router
+        // Simulate INVOCATION from the router
         // [68, invRequestId, registrationId, {}, [3, 5]]
         $invocation = WampMessage::fromArray([68, 555, 1001, [], [3, 5]]);
         $this->callee->onInvocation($invocation);
     });
 
-    it('invia ERROR se l\'handler lancia un\'eccezione', function () {
+    it('sends ERROR when the handler throws', function () {
         $this->session->shouldReceive('send')->twice();
 
         $this->callee->register('com.myapp.fallisce', function () {
@@ -93,7 +93,7 @@ describe('Callee', function () {
         $this->callee->onInvocation($invocation);
     });
 
-    it('restituisce le registrazioni attive', function () {
+    it('returns the active registrations', function () {
         $this->session->shouldReceive('send')->once();
 
         $handler = fn ($args) => $args[0] * 2;

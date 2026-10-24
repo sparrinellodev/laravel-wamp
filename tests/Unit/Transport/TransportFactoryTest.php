@@ -19,7 +19,7 @@ describe('TransportFactory', function () {
         $this->serializer = new JsonSerializer;
     });
 
-    it('crea un WebSocketTransport per tipo websocket', function () {
+    it('creates a WebSocketTransport for the websocket type', function () {
         $transport = $this->factory->make(
             type: 'websocket',
             url: 'ws://localhost:8080/ws',
@@ -29,7 +29,7 @@ describe('TransportFactory', function () {
         expect($transport)->toBeInstanceOf(WebSocketTransport::class);
     });
 
-    it('crea un RawSocketTransport per tipo rawsocket TCP', function () {
+    it('creates a RawSocketTransport for the rawsocket type over TCP', function () {
         $transport = $this->factory->make(
             type: 'rawsocket',
             url: 'tcp://localhost:8081',
@@ -39,7 +39,7 @@ describe('TransportFactory', function () {
         expect($transport)->toBeInstanceOf(RawSocketTransport::class);
     });
 
-    it('crea un RawSocketTransport per tipo rawsocket Unix', function () {
+    it('creates a RawSocketTransport for the rawsocket type over a Unix socket', function () {
         $transport = $this->factory->make(
             type: 'rawsocket',
             url: 'unix:///var/run/crossbar/router.sock',
@@ -49,7 +49,7 @@ describe('TransportFactory', function () {
         expect($transport)->toBeInstanceOf(RawSocketTransport::class);
     });
 
-    it('lancia TransportException per tipo sconosciuto', function () {
+    it('throws TransportException for an unknown type', function () {
         $this->factory->make(
             type: 'sconosciuto',
             url: 'tcp://localhost:8081',

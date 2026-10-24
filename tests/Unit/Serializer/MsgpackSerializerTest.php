@@ -9,7 +9,7 @@ describe('MsgpackSerializer', function () {
         $this->serializer = new MsgpackSerializer;
     });
 
-    it('serializza un array in MessagePack', function () {
+    it('serializes an array to MessagePack', function () {
         $data = [48, 1, [], 'com.myapp.test', [3, 5]];
         $result = $this->serializer->serialize($data);
 
@@ -18,7 +18,7 @@ describe('MsgpackSerializer', function () {
             ->not->toBeEmpty();
     });
 
-    it('deserializza MessagePack in array corretto', function () {
+    it('deserializes MessagePack to the correct array', function () {
         $original = [48, 1, [], 'com.myapp.test', [3, 5]];
         $packed = $this->serializer->serialize($original);
         $result = $this->serializer->deserialize($packed);
@@ -26,7 +26,7 @@ describe('MsgpackSerializer', function () {
         expect($result)->toBe($original);
     });
 
-    it('è simmetrico — serialize poi deserialize restituisce i dati originali', function () {
+    it('round-trips data — serialize then deserialize returns the original data', function () {
         $original = [2, 123456, ['roles' => ['caller' => [], 'callee' => []]]];
         $result = $this->serializer->deserialize(
             $this->serializer->serialize($original),
@@ -35,7 +35,7 @@ describe('MsgpackSerializer', function () {
         expect($result)->toBe($original);
     });
 
-    it('gestisce stringhe unicode correttamente', function () {
+    it('handles unicode strings', function () {
         $data = [1, 'realm1', ['authmethods' => ['anonymous'], 'authextra' => []]];
         $packed = $this->serializer->serialize($data);
         $result = $this->serializer->deserialize($packed);
@@ -43,7 +43,7 @@ describe('MsgpackSerializer', function () {
         expect($result[1])->toBe('realm1');
     });
 
-    it('gestisce array vuoti', function () {
+    it('handles empty arrays', function () {
         $data = [48, 1, [], 'com.test', [], []];
         $packed = $this->serializer->serialize($data);
         $result = $this->serializer->deserialize($packed);
@@ -51,7 +51,7 @@ describe('MsgpackSerializer', function () {
         expect($result)->toBe($data);
     });
 
-    it('gestisce tipi misti', function () {
+    it('handles mixed types', function () {
         $data = [50, 99, [], [true, false, null, 42, 3.14, 'stringa']];
         $packed = $this->serializer->serialize($data);
         $result = $this->serializer->deserialize($packed);
@@ -63,15 +63,15 @@ describe('MsgpackSerializer', function () {
             ->and($result[3][5])->toBe('stringa');
     });
 
-    it('lancia SerializationException per dati non deserializzabili', function () {
+    it('throws SerializationException for undecodable data', function () {
         $this->serializer->deserialize('dati-invalidi-non-msgpack');
     })->throws(SerializationException::class);
 
-    it('restituisce il subprotocol corretto', function () {
+    it('returns the correct subprotocol', function () {
         expect($this->serializer->subprotocol())->toBe('wamp.2.msgpack');
     });
 
-    it('produce output più compatto di JSON per payload grandi', function () {
+    it('produces more compact output than JSON for large payloads', function () {
         $data = array_fill(0, 100, 'stringa-di-test-abbastanza-lunga');
 
         $json = json_encode($data);
@@ -80,16 +80,16 @@ describe('MsgpackSerializer', function () {
         expect(strlen($msgpack))->toBeLessThan(strlen($json));
     });
 
-    it('serializza stdClass come mappa MessagePack', function () {
-        // stdClass vuoto → mappa vuota MessagePack
+    it('serializes stdClass as a MessagePack map', function () {
+        // Empty stdClass → empty MessagePack map
         $data = [48, 1, (object) [], 'com.myapp.test', [3, 5], (object) []];
         $packed = $this->serializer->serialize($data);
 
-        // Non deve lanciare eccezioni
+        // Must not throw
         expect($packed)->toBeString()->not->toBeEmpty();
     });
 
-    it('serializza array associativo come mappa MessagePack', function () {
+    it('serializes an associative array as a MessagePack map', function () {
         $data = [2, 123, ['roles' => ['caller' => [], 'callee' => []]]];
         $packed = $this->serializer->serialize($data);
         $result = $this->serializer->deserialize($packed);

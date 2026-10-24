@@ -4,7 +4,7 @@ use Hermod\LaravelWamp\Laravel\Events\WampEventReceived;
 
 describe('WampEventReceived', function () {
 
-    it('memorizza correttamente tutti i campi dell\'evento', function () {
+    it('stores all event fields', function () {
         $event = new WampEventReceived(
             topic: 'com.myapp.notifiche',
             subscriptionId: 7777,
@@ -22,7 +22,7 @@ describe('WampEventReceived', function () {
             ->and($event->details)->toBe(['publisher' => 999]);
     });
 
-    it('accetta arrays vuoti per args, kwargs e details', function () {
+    it('accepts empty arrays for args, kwargs and details', function () {
         $event = new WampEventReceived(
             topic: 'com.myapp.test',
             subscriptionId: 1,

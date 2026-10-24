@@ -16,17 +16,17 @@ describe('SerializerFactory', function () {
         ]);
     });
 
-    it('crea un JsonSerializer correttamente', function () {
+    it('creates a JsonSerializer', function () {
         $serializer = $this->factory->make('json');
 
         expect($serializer)->toBeInstanceOf(JsonSerializer::class);
     });
 
-    it('lancia eccezione per driver sconosciuto', function () {
+    it('throws for an unknown driver', function () {
         $this->factory->make('driver-inesistente');
     })->throws(SerializationException::class, 'is not supported');
 
-    it('lancia eccezione per classe inesistente', function () {
+    it('throws for a missing class', function () {
         $factory = new SerializerFactory(['fake' => 'Hermod\\Serializer\\FakeSerializer']);
         $factory->make('fake');
     })->throws(SerializationException::class, 'not found');

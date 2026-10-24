@@ -11,7 +11,7 @@ describe('MessageFactory — Auth', function () {
 
     describe('helloWithAuth()', function () {
 
-        it('costruisce HELLO con anonymous auth', function () {
+        it('builds HELLO with anonymous auth', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'anonymous',
@@ -22,7 +22,7 @@ describe('MessageFactory — Auth', function () {
                 ->and($message->get(2)['authmethods'])->toBe(['anonymous']);
         });
 
-        it('include authid quando fornito', function () {
+        it('includes authid when provided', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'ticket',
@@ -32,7 +32,7 @@ describe('MessageFactory — Auth', function () {
             expect($message->get(2)['authid'])->toBe('user123');
         });
 
-        it('non include authid quando null', function () {
+        it('omits authid when null', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'anonymous',
@@ -42,7 +42,7 @@ describe('MessageFactory — Auth', function () {
             expect(isset($message->get(2)['authid']))->toBeFalse();
         });
 
-        it('include authextra quando fornito', function () {
+        it('includes authextra when provided', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'wampcra',
@@ -53,7 +53,7 @@ describe('MessageFactory — Auth', function () {
             expect($message->get(2)['authextra'])->toBe(['channel_binding' => null]);
         });
 
-        it('include authextra come oggetto vuoto quando non fornito', function () {
+        it('encodes authextra as an empty object when not provided', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'anonymous',
@@ -63,7 +63,7 @@ describe('MessageFactory — Auth', function () {
             expect($raw)->toContain('"authextra":{}');
         });
 
-        it('include sempre i roles', function () {
+        it('always includes roles', function () {
             $message = MessageFactory::helloWithAuth(
                 realm: 'realm1',
                 authMethod: 'anonymous',
@@ -80,21 +80,21 @@ describe('MessageFactory — Auth', function () {
 
     describe('authenticate()', function () {
 
-        it('costruisce un messaggio AUTHENTICATE corretto', function () {
+        it('builds a valid AUTHENTICATE message', function () {
             $message = MessageFactory::authenticate('my-signature');
 
             expect($message->type())->toBe(MessageType::AUTHENTICATE)
                 ->and($message->get(1))->toBe('my-signature');
         });
 
-        it('include extra come oggetto vuoto quando non fornito', function () {
+        it('encodes extra as an empty object when not provided', function () {
             $message = MessageFactory::authenticate('sig');
             $raw = json_encode($message->toArray());
 
             expect($raw)->toContain('{}');
         });
 
-        it('include extra quando fornito', function () {
+        it('includes extra when provided', function () {
             $message = MessageFactory::authenticate('sig', ['channel_binding' => 'tls-unique']);
 
             expect($message->get(2))->toBe(['channel_binding' => 'tls-unique']);

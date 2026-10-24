@@ -34,7 +34,7 @@ describe('Subscriber', function () {
 
     describe('subscribe()', function () {
 
-        it('invia SUBSCRIBE al router', function () {
+        it('sends SUBSCRIBE to the router', function () {
             $this->session
                 ->shouldReceive('send')
                 ->once()
@@ -46,7 +46,7 @@ describe('Subscriber', function () {
             $this->subscriber->subscribe('com.myapp.notifiche', fn () => null);
         });
 
-        it('restituisce un oggetto Subscription', function () {
+        it('returns a Subscription object', function () {
             $this->session->shouldReceive('send')->once();
 
             $subscription = $this->subscriber->subscribe('com.myapp.notifiche', fn () => null);
@@ -55,7 +55,7 @@ describe('Subscriber', function () {
                 ->and($subscription->topic)->toBe('com.myapp.notifiche');
         });
 
-        it('lancia eccezione se già sottoscritto allo stesso topic', function () {
+        it('throws when already subscribed to the same topic', function () {
             $this->session->shouldReceive('send')->once();
 
             $this->subscriber->subscribe('com.myapp.notifiche', fn () => null);
@@ -71,17 +71,17 @@ describe('Subscriber', function () {
 
     describe('onSubscribed()', function () {
 
-        it('conferma la sottoscrizione quando arriva SUBSCRIBED', function () {
+        it('confirms the subscription when SUBSCRIBED arrives', function () {
             $this->session->shouldReceive('send')->once();
 
             $this->subscriber->subscribe('com.myapp.test', fn () => null);
 
-            // Recuperiamo il requestId
+            // Retrieve the requestId
             $pending = (new ReflectionProperty($this->registry, 'pending'))
                 ->getValue($this->registry);
             $requestId = array_key_first($pending);
 
-            // Simuliamo SUBSCRIBED [33, requestId, subscriptionId]
+            // Simulate SUBSCRIBED [33, requestId, subscriptionId]
             $subscribed = WampMessage::fromArray([33, $requestId, 7777]);
             $this->subscriber->onSubscribed($subscribed);
 
@@ -91,7 +91,7 @@ describe('Subscriber', function () {
                 ->and($found->topic)->toBe('com.myapp.test');
         });
 
-        it('ignora silenziosamente SUBSCRIBED per requestId sconosciuto', function () {
+        it('silently ignores SUBSCRIBED for an unknown requestId', function () {
             $unknown = WampMessage::fromArray([33, 99999, 1234]);
             $this->subscriber->onSubscribed($unknown);
 
@@ -105,7 +105,7 @@ describe('Subscriber', function () {
 
     describe('onEvent()', function () {
 
-        it('esegue l\'handler quando arriva un EVENT', function () {
+        it('runs the handler when an EVENT arrives', function () {
             $this->session->shouldReceive('send')->once();
 
             $received = [];
@@ -120,14 +120,14 @@ describe('Subscriber', function () {
             $subscribed = WampMessage::fromArray([33, $requestId, 8888]);
             $this->subscriber->onSubscribed($subscribed);
 
-            // Simuliamo EVENT [36, subscriptionId, publicationId, {}, args]
+            // Simulate EVENT [36, subscriptionId, publicationId, {}, args]
             $event = WampMessage::fromArray([36, 8888, 1111, [], ['ciao', 'mondo']]);
             $this->subscriber->onEvent($event);
 
             expect($received)->toBe(['ciao', 'mondo']);
         });
 
-        it('dispatcha un evento Laravel WampEventReceived', function () {
+        it('dispatches a WampEventReceived Laravel event', function () {
             Event::fake();
 
             $this->session->shouldReceive('send')->once();
@@ -152,14 +152,14 @@ describe('Subscriber', function () {
             });
         });
 
-        it('ignora EVENT per subscriptionId sconosciuto', function () {
+        it('ignores EVENT for an unknown subscriptionId', function () {
             $unknown = WampMessage::fromArray([36, 99999, 1111, [], []]);
             $this->subscriber->onEvent($unknown);
 
             expect(true)->toBeTrue();
         });
 
-        it('non blocca il loop se l\'handler lancia un\'eccezione', function () {
+        it('does not break the loop when the handler throws', function () {
             $this->session->shouldReceive('send')->once();
 
             $this->subscriber->subscribe('com.myapp.test', function () {
@@ -173,7 +173,7 @@ describe('Subscriber', function () {
             $subscribed = WampMessage::fromArray([33, $requestId, 1234]);
             $this->subscriber->onSubscribed($subscribed);
 
-            // Non deve propagare l'eccezione
+            // The exception must not propagate
             $event = WampMessage::fromArray([36, 1234, 5678, [], []]);
             $this->subscriber->onEvent($event);
 
@@ -187,7 +187,7 @@ describe('Subscriber', function () {
 
     describe('unsubscribe()', function () {
 
-        it('invia UNSUBSCRIBE al router', function () {
+        it('sends UNSUBSCRIBE to the router', function () {
             $this->session->shouldReceive('send')->twice(); // SUBSCRIBE + UNSUBSCRIBE
 
             $this->subscriber->subscribe('com.myapp.test', fn () => null);
@@ -208,7 +208,7 @@ describe('Subscriber', function () {
             $this->subscriber->unsubscribe('com.myapp.test');
         });
 
-        it('lancia eccezione se il topic non è sottoscritto', function () {
+        it('throws when the topic is not subscribed', function () {
             expect(fn () => $this->subscriber->unsubscribe('com.myapp.inesistente'))
                 ->toThrow(PubSubException::class, 'No active subscription found');
         });
@@ -220,7 +220,7 @@ describe('Subscriber', function () {
 
     describe('onUnsubscribed()', function () {
 
-        it('rimuove la sottoscrizione quando arriva UNSUBSCRIBED', function () {
+        it('removes the subscription when UNSUBSCRIBED arrives', function () {
             $this->session->shouldReceive('send')->twice();
 
             $this->subscriber->subscribe('com.myapp.test', fn () => null);
@@ -238,7 +238,7 @@ describe('Subscriber', function () {
                 ->getValue($this->registry);
             $unsubRequestId = array_key_first($pendingUnsub);
 
-            // Simuliamo UNSUBSCRIBED [35, requestId]
+            // Simulate UNSUBSCRIBED [35, requestId]
             $unsubscribed = WampMessage::fromArray([35, $unsubRequestId]);
             $this->subscriber->onUnsubscribed($unsubscribed);
 
@@ -253,7 +253,7 @@ describe('Subscriber', function () {
 
     describe('getSubscriptions()', function () {
 
-        it('restituisce tutte le sottoscrizioni attive', function () {
+        it('returns all active subscriptions', function () {
             $this->session->shouldReceive('send')->twice();
 
             $this->subscriber->subscribe('com.myapp.uno', fn () => null);

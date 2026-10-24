@@ -20,19 +20,19 @@ describe('WampSession', function () {
             $this->transport,
             $this->serializer,
             'realm1',
-            $this->authenticator,   // ← aggiunto
+            $this->authenticator,
         );
     });
 
     afterEach(fn () => Mockery::close());
 
-    it('parte nello stato Closed', function () {
+    it('starts in the Closed state', function () {
         expect($this->session->getState())->toBe(SessionState::Closed)
             ->and($this->session->isEstablished())->toBeFalse()
             ->and($this->session->getSessionId())->toBeNull();
     });
 
-    it('stabilisce la sessione correttamente con WELCOME', function () {
+    it('establishes the session on WELCOME', function () {
         $welcome = json_encode([2, 987654, ['roles' => []]]);
 
         $this->transport->shouldReceive('connect')->once();
@@ -47,7 +47,7 @@ describe('WampSession', function () {
             ->and($this->session->getState())->toBe(SessionState::Established);
     });
 
-    it('lancia WampProtocolException quando riceve ABORT', function () {
+    it('throws WampProtocolException on ABORT', function () {
         $abort = json_encode([3, ['message' => 'Realm inesistente'], 'wamp.error.no_such_realm']);
 
         $this->transport->shouldReceive('connect')->once();
@@ -59,7 +59,7 @@ describe('WampSession', function () {
             ->toThrow(WampProtocolException::class, 'no_such_realm');
     });
 
-    it('lancia SessionException se hello() viene chiamato due volte', function () {
+    it('throws SessionException when hello() is called twice', function () {
         $welcome = json_encode([2, 111, []]);
 
         $this->transport->shouldReceive('connect')->once();
@@ -72,7 +72,7 @@ describe('WampSession', function () {
             ->toThrow(SessionException::class, 'hello');
     });
 
-    it('chiude correttamente la sessione con goodbye()', function () {
+    it('closes the session with goodbye()', function () {
         $welcome = json_encode([2, 111, []]);
         $goodbye = json_encode([6, [], 'wamp.close.normal']);
 
@@ -89,7 +89,7 @@ describe('WampSession', function () {
             ->and($this->session->getSessionId())->toBeNull();
     });
 
-    it('lancia SessionException se send() chiamato senza sessione attiva', function () {
+    it('throws SessionException when send() is called without an active session', function () {
         $message = WampMessage::create(MessageType::CALL, 1, [], 'com.test', []);
 
         expect(fn () => $this->session->send($message))

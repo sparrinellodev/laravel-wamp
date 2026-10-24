@@ -11,12 +11,12 @@ describe('PendingSubscriptionRegistry', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Registrazione pendente
+    // Pending registration
     // -------------------------------------------------------------------------
 
     describe('registerPending()', function () {
 
-        it('registra una sottoscrizione pendente', function () {
+        it('registers a pending subscription', function () {
             $handler = fn () => null;
 
             $this->registry->registerPending(42, 'com.myapp.test', $handler);
@@ -24,7 +24,7 @@ describe('PendingSubscriptionRegistry', function () {
             expect($this->registry->isTopicSubscribed('com.myapp.test'))->toBeTrue();
         });
 
-        it('riconosce topic pendente come già sottoscritto', function () {
+        it('treats a pending topic as already subscribed', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
 
             expect($this->registry->isTopicSubscribed('com.myapp.test'))->toBeTrue();
@@ -32,12 +32,12 @@ describe('PendingSubscriptionRegistry', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Conferma sottoscrizione
+    // Subscription confirmation
     // -------------------------------------------------------------------------
 
     describe('confirmSubscription()', function () {
 
-        it('conferma la sottoscrizione e crea la Subscription', function () {
+        it('confirms the subscription and creates the Subscription', function () {
             $handler = fn () => null;
 
             $this->registry->registerPending(42, 'com.myapp.test', $handler);
@@ -49,27 +49,27 @@ describe('PendingSubscriptionRegistry', function () {
                 ->and($subscription->handler)->toBe($handler);
         });
 
-        it('lancia eccezione per requestId sconosciuto', function () {
+        it('throws for an unknown requestId', function () {
             $this->registry->confirmSubscription(99999, 1001);
         })->throws(PubSubException::class, 'No pending subscription found');
 
-        it('rimuove la sottoscrizione dai pending dopo la conferma', function () {
+        it('removes the subscription from pending after confirmation', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
             $this->registry->confirmSubscription(1, 1001);
 
-            // Il topic è ora confermato, non più pendente
-            // ma risulta ancora "sottoscritto"
+            // The topic is now confirmed, no longer pending,
+            // but it is still reported as "subscribed"
             expect($this->registry->isTopicSubscribed('com.myapp.test'))->toBeTrue();
         });
     });
 
     // -------------------------------------------------------------------------
-    // Ricerca
+    // Lookup
     // -------------------------------------------------------------------------
 
     describe('findBySubscriptionId()', function () {
 
-        it('trova una subscription per subscriptionId', function () {
+        it('finds a subscription by subscriptionId', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
             $this->registry->confirmSubscription(1, 9999);
 
@@ -79,14 +79,14 @@ describe('PendingSubscriptionRegistry', function () {
                 ->and($found->subscriptionId)->toBe(9999);
         });
 
-        it('restituisce null per subscriptionId inesistente', function () {
+        it('returns null for an unknown subscriptionId', function () {
             expect($this->registry->findBySubscriptionId(99999))->toBeNull();
         });
     });
 
     describe('findByTopic()', function () {
 
-        it('trova una subscription per topic', function () {
+        it('finds a subscription by topic', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
             $this->registry->confirmSubscription(1, 1001);
 
@@ -96,28 +96,28 @@ describe('PendingSubscriptionRegistry', function () {
                 ->and($found->topic)->toBe('com.myapp.test');
         });
 
-        it('restituisce null per topic non sottoscritto', function () {
+        it('returns null for a topic that is not subscribed', function () {
             expect($this->registry->findByTopic('com.myapp.inesistente'))->toBeNull();
         });
     });
 
     // -------------------------------------------------------------------------
-    // Disiscrizione
+    // Unsubscription
     // -------------------------------------------------------------------------
 
     describe('unsubscribe()', function () {
 
-        it('registra una disiscrizione pendente', function () {
+        it('registers a pending unsubscription', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
             $this->registry->confirmSubscription(1, 1001);
             $this->registry->registerPendingUnsubscribe(2, 'com.myapp.test');
 
-            // Dopo unsubscribe pending il topic è ancora presente
-            // finché non arriva la conferma
+            // With a pending unsubscribe the topic is still present
+            // until the confirmation arrives
             expect($this->registry->findByTopic('com.myapp.test'))->not->toBeNull();
         });
 
-        it('rimuove la sottoscrizione dopo conferma unsubscription', function () {
+        it('removes the subscription after the unsubscription is confirmed', function () {
             $this->registry->registerPending(1, 'com.myapp.test', fn () => null);
             $this->registry->confirmSubscription(1, 1001);
             $this->registry->registerPendingUnsubscribe(2, 'com.myapp.test');
@@ -127,8 +127,8 @@ describe('PendingSubscriptionRegistry', function () {
                 ->and($this->registry->isTopicSubscribed('com.myapp.test'))->toBeFalse();
         });
 
-        it('ignora silenziosamente requestId sconosciuto in confirmUnsubscription', function () {
-            // Non deve lanciare eccezioni
+        it('silently ignores an unknown requestId in confirmUnsubscription', function () {
+            // Must not throw
             $this->registry->confirmUnsubscription(99999);
             expect(true)->toBeTrue();
         });
@@ -140,7 +140,7 @@ describe('PendingSubscriptionRegistry', function () {
 
     describe('getAll()', function () {
 
-        it('restituisce tutte le sottoscrizioni attive', function () {
+        it('returns all active subscriptions', function () {
             $this->registry->registerPending(1, 'com.myapp.uno', fn () => null);
             $this->registry->registerPending(2, 'com.myapp.due', fn () => null);
             $this->registry->confirmSubscription(1, 1001);
@@ -153,7 +153,7 @@ describe('PendingSubscriptionRegistry', function () {
                 ->toHaveKeys(['com.myapp.uno', 'com.myapp.due']);
         });
 
-        it('restituisce array vuoto se nessuna sottoscrizione attiva', function () {
+        it('returns an empty array when there are no active subscriptions', function () {
             expect($this->registry->getAll())->toBe([]);
         });
     });

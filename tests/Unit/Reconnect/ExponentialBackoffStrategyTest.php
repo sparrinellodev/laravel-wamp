@@ -13,11 +13,11 @@ describe('ExponentialBackoffStrategy', function () {
         );
     });
 
-    it('parte con zero tentativi', function () {
+    it('starts with zero attempts', function () {
         expect($this->strategy->attempts())->toBe(0);
     });
 
-    it('permette retry finché i tentativi non si esauriscono', function () {
+    it('allows retries until attempts are exhausted', function () {
         expect($this->strategy->shouldRetry())->toBeTrue();
 
         for ($i = 0; $i < 5; $i++) {
@@ -27,12 +27,12 @@ describe('ExponentialBackoffStrategy', function () {
         expect($this->strategy->shouldRetry())->toBeFalse();
     });
 
-    it('inizia con il base delay', function () {
+    it('starts with the base delay', function () {
         expect($this->strategy->nextDelay())->toBe(1.0);
     });
 
-    it('applica il backoff esponenziale correttamente', function () {
-        expect($this->strategy->nextDelay())->toBe(1.0);  // prima del primo fallimento
+    it('applies exponential backoff', function () {
+        expect($this->strategy->nextDelay())->toBe(1.0);  // before the first failure
 
         $this->strategy->recordFailure();
         expect($this->strategy->nextDelay())->toBe(2.0);  // 1.0 * 2
@@ -47,9 +47,9 @@ describe('ExponentialBackoffStrategy', function () {
         expect($this->strategy->nextDelay())->toBe(16.0); // 8.0 * 2
     });
 
-    it('non supera il max delay', function () {
-        // Con maxDelay=30 e multiplier=2 partendo da 1
-        // dopo 5 recordFailure il delay sarebbe 32 → cappato a 30
+    it('never exceeds the max delay', function () {
+        // With maxDelay=30 and multiplier=2 starting from 1,
+        // after 5 recordFailure calls the delay would be 32 → capped at 30
         for ($i = 0; $i < 5; $i++) {
             $this->strategy->recordFailure();
         }
@@ -57,7 +57,7 @@ describe('ExponentialBackoffStrategy', function () {
         expect($this->strategy->nextDelay())->toBe(30.0);
     });
 
-    it('incrementa il contatore dei tentativi', function () {
+    it('increments the attempt counter', function () {
         $this->strategy->recordFailure();
         expect($this->strategy->attempts())->toBe(1);
 
@@ -68,7 +68,7 @@ describe('ExponentialBackoffStrategy', function () {
         expect($this->strategy->attempts())->toBe(3);
     });
 
-    it('resetta correttamente dopo reset()', function () {
+    it('resets state after reset()', function () {
         $this->strategy->recordFailure();
         $this->strategy->recordFailure();
         $this->strategy->recordFailure();
@@ -80,7 +80,7 @@ describe('ExponentialBackoffStrategy', function () {
             ->and($this->strategy->shouldRetry())->toBeTrue();
     });
 
-    it('funziona con maxAttempts=1', function () {
+    it('works with maxAttempts=1', function () {
         $strategy = new ExponentialBackoffStrategy(
             maxAttempts: 1,
             baseDelay: 1.0,
@@ -95,7 +95,7 @@ describe('ExponentialBackoffStrategy', function () {
         expect($strategy->shouldRetry())->toBeFalse();
     });
 
-    it('funziona con multiplier=1 (delay costante)', function () {
+    it('works with multiplier=1 (constant delay)', function () {
         $strategy = new ExponentialBackoffStrategy(
             maxAttempts: 3,
             baseDelay: 5.0,

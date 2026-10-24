@@ -16,13 +16,13 @@ describe('AuthenticatorFactory', function () {
     // Anonymous
     // -------------------------------------------------------------------------
 
-    it('crea un AnonymousAuthenticator per metodo anonymous', function () {
+    it('creates an AnonymousAuthenticator for the anonymous method', function () {
         $auth = $this->factory->make(['method' => 'anonymous']);
 
         expect($auth)->toBeInstanceOf(AnonymousAuthenticator::class);
     });
 
-    it('usa anonymous come metodo di default', function () {
+    it('uses anonymous as the default method', function () {
         $auth = $this->factory->make([]);
 
         expect($auth)->toBeInstanceOf(AnonymousAuthenticator::class);
@@ -32,7 +32,7 @@ describe('AuthenticatorFactory', function () {
     // Ticket
     // -------------------------------------------------------------------------
 
-    it('crea un TicketAuthenticator con config corretta', function () {
+    it('creates a TicketAuthenticator from a valid config', function () {
         $auth = $this->factory->make([
             'method' => 'ticket',
             'authid' => 'user123',
@@ -43,19 +43,19 @@ describe('AuthenticatorFactory', function () {
             ->and($auth->authId())->toBe('user123');
     });
 
-    it('lancia eccezione se authid mancante per ticket auth', function () {
+    it('throws if authid is missing for ticket auth', function () {
         expect(fn () => $this->factory->make([
             'method' => 'ticket',
             'ticket' => 'my-ticket',
-            // authid mancante
+            // authid missing
         ]))->toThrow(AuthenticationException::class, 'authid');
     });
 
-    it('lancia eccezione se ticket mancante per ticket auth', function () {
+    it('throws if ticket is missing for ticket auth', function () {
         expect(fn () => $this->factory->make([
             'method' => 'ticket',
             'authid' => 'user123',
-            // ticket mancante
+            // ticket missing
         ]))->toThrow(AuthenticationException::class, 'ticket');
     });
 
@@ -63,7 +63,7 @@ describe('AuthenticatorFactory', function () {
     // WAMP-CRA
     // -------------------------------------------------------------------------
 
-    it('crea un WampCraAuthenticator con config corretta', function () {
+    it('creates a WampCraAuthenticator from a valid config', function () {
         $auth = $this->factory->make([
             'method' => 'wampcra',
             'authid' => 'user123',
@@ -74,14 +74,14 @@ describe('AuthenticatorFactory', function () {
             ->and($auth->authId())->toBe('user123');
     });
 
-    it('lancia eccezione se authid mancante per wampcra', function () {
+    it('throws if authid is missing for wampcra', function () {
         expect(fn () => $this->factory->make([
             'method' => 'wampcra',
             'secret' => 'my-secret',
         ]))->toThrow(AuthenticationException::class, 'authid');
     });
 
-    it('lancia eccezione se secret mancante per wampcra', function () {
+    it('throws if secret is missing for wampcra', function () {
         expect(fn () => $this->factory->make([
             'method' => 'wampcra',
             'authid' => 'user123',
@@ -89,10 +89,10 @@ describe('AuthenticatorFactory', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Metodo sconosciuto
+    // Unknown method
     // -------------------------------------------------------------------------
 
-    it('lancia eccezione per metodo non supportato', function () {
+    it('throws for an unsupported method', function () {
         expect(fn () => $this->factory->make(['method' => 'oauth2']))
             ->toThrow(AuthenticationException::class, 'Unsupported authentication method');
     });

@@ -7,7 +7,7 @@ describe('MessageFactory', function () {
 
     describe('hello()', function () {
 
-        it('costruisce un messaggio HELLO corretto', function () {
+        it('builds a valid HELLO message', function () {
             $message = MessageFactory::hello('realm1');
 
             expect($message->type())->toBe(MessageType::HELLO)
@@ -19,14 +19,14 @@ describe('MessageFactory', function () {
 
     describe('goodbye()', function () {
 
-        it('costruisce un messaggio GOODBYE con reason di default', function () {
+        it('builds a GOODBYE message with the default reason', function () {
             $message = MessageFactory::goodbye();
 
             expect($message->type())->toBe(MessageType::GOODBYE)
                 ->and($message->get(2))->toBe('wamp.close.normal');
         });
 
-        it('costruisce un messaggio GOODBYE con reason personalizzata', function () {
+        it('builds a GOODBYE message with a custom reason', function () {
             $message = MessageFactory::goodbye('wamp.close.system_shutdown');
 
             expect($message->get(2))->toBe('wamp.close.system_shutdown');
@@ -35,7 +35,7 @@ describe('MessageFactory', function () {
 
     describe('call()', function () {
 
-        it('costruisce un messaggio CALL corretto', function () {
+        it('builds a valid CALL message', function () {
             $message = MessageFactory::call(
                 requestId: 42,
                 procedure: 'com.myapp.somma',
@@ -50,7 +50,7 @@ describe('MessageFactory', function () {
                 ->and($message->get(4))->toBe([3, 5]);
         });
 
-        it('include kwargs quando forniti', function () {
+        it('includes kwargs when provided', function () {
             $message = MessageFactory::call(1, 'com.myapp.test', [], ['nome' => 'Mario']);
 
             expect($message->get(5))->toEqual((object) ['nome' => 'Mario']);
@@ -59,7 +59,7 @@ describe('MessageFactory', function () {
 
     describe('register()', function () {
 
-        it('costruisce un messaggio REGISTER corretto', function () {
+        it('builds a valid REGISTER message', function () {
             $message = MessageFactory::register(99, 'com.myapp.somma');
 
             expect($message->type())->toBe(MessageType::REGISTER)
@@ -70,7 +70,7 @@ describe('MessageFactory', function () {
 
     describe('yield()', function () {
 
-        it('costruisce un messaggio YIELD corretto', function () {
+        it('builds a valid YIELD message', function () {
             $message = MessageFactory::yield(55, [42]);
 
             expect($message->type())->toBe(MessageType::YIELD)
@@ -81,7 +81,7 @@ describe('MessageFactory', function () {
 
     describe('yieldError()', function () {
 
-        it('costruisce un messaggio ERROR corretto per INVOCATION', function () {
+        it('builds a valid ERROR message for INVOCATION', function () {
             $message = MessageFactory::yieldError(55, 'wamp.error.runtime_error', ['oops']);
 
             expect($message->type())->toBe(MessageType::ERROR)

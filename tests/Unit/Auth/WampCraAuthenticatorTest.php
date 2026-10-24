@@ -13,37 +13,37 @@ describe('WampCraAuthenticator', function () {
         );
     });
 
-    it('restituisce il metodo corretto', function () {
+    it('returns the correct method', function () {
         expect($this->auth->method())->toBe(AuthMethod::WampCra);
     });
 
-    it('restituisce l\'authId corretto', function () {
+    it('returns the correct authId', function () {
         expect($this->auth->authId())->toBe('user123');
     });
 
-    it('non ha authExtra', function () {
+    it('has no authExtra', function () {
         expect($this->auth->authExtra())->toBe([]);
     });
 
-    it('richiede challenge', function () {
+    it('requires a challenge', function () {
         expect($this->auth->requiresChallenge())->toBeTrue();
     });
 
-    it('calcola correttamente la firma HMAC-SHA256', function () {
+    it('computes the HMAC-SHA256 signature', function () {
         $challenge = 'test-challenge-string';
         $expected = base64_encode(hash_hmac('sha256', $challenge, 'my-secret', binary: true));
 
         expect($this->auth->handleChallenge($challenge))->toBe($expected);
     });
 
-    it('produce firme diverse per challenge diverse', function () {
+    it('produces different signatures for different challenges', function () {
         $sig1 = $this->auth->handleChallenge('challenge-uno');
         $sig2 = $this->auth->handleChallenge('challenge-due');
 
         expect($sig1)->not->toBe($sig2);
     });
 
-    it('produce firme diverse per secret diversi', function () {
+    it('produces different signatures for different secrets', function () {
         $auth1 = new WampCraAuthenticator('user', 'secret-uno');
         $auth2 = new WampCraAuthenticator('user', 'secret-due');
 
@@ -53,14 +53,14 @@ describe('WampCraAuthenticator', function () {
         expect($sig1)->not->toBe($sig2);
     });
 
-    it('lancia eccezione per challenge vuota', function () {
+    it('throws for an empty challenge', function () {
         expect(fn () => $this->auth->handleChallenge(''))
             ->toThrow(AuthenticationException::class, 'Empty challenge');
     });
 
-    describe('WAMP-CRA salted (con PBKDF2)', function () {
+    describe('WAMP-CRA salted (PBKDF2)', function () {
 
-        it('deriva la chiave con PBKDF2 quando viene fornita la salt', function () {
+        it('derives the key with PBKDF2 when a salt is provided', function () {
             $challenge = 'test-challenge';
             $extra = [
                 'challenge' => $challenge,
@@ -71,17 +71,17 @@ describe('WampCraAuthenticator', function () {
 
             $result = $this->auth->handleChallenge($challenge, $extra);
 
-            // Verifica che il risultato sia una stringa base64 non vuota
+            // The result must be a non-empty base64 string
             expect($result)
                 ->toBeString()
                 ->not->toBeEmpty();
 
-            // Verifica che sia diverso dalla firma senza salt
+            // It must differ from the unsalted signature
             $unsalted = $this->auth->handleChallenge($challenge);
             expect($result)->not->toBe($unsalted);
         });
 
-        it('produce lo stesso risultato con gli stessi parametri PBKDF2', function () {
+        it('produces the same result for the same PBKDF2 parameters', function () {
             $challenge = 'test-challenge';
             $extra = [
                 'challenge' => $challenge,
@@ -96,12 +96,12 @@ describe('WampCraAuthenticator', function () {
             expect($result1)->toBe($result2);
         });
 
-        it('usa i valori di default se iterations e keylen non sono forniti', function () {
+        it('uses default values when iterations and keylen are not provided', function () {
             $challenge = 'test-challenge';
             $extra = [
                 'challenge' => $challenge,
                 'salt' => 'some-salt',
-                // iterations e keylen non forniti → useranno i default
+                // iterations and keylen omitted → defaults are used
             ];
 
             $result = $this->auth->handleChallenge($challenge, $extra);

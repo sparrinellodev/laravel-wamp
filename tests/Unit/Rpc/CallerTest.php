@@ -19,7 +19,7 @@ describe('Caller', function () {
 
     afterEach(fn () => Mockery::close());
 
-    it('invia un messaggio CALL alla sessione', function () {
+    it('sends a CALL message to the session', function () {
         $this->session
             ->shouldReceive('send')
             ->once()
@@ -33,18 +33,18 @@ describe('Caller', function () {
         expect($future)->toBeInstanceOf(Future::class);
     });
 
-    it('risolve il Future quando arriva RESULT', function () {
+    it('resolves the Future when RESULT arrives', function () {
         $this->session->shouldReceive('send')->once();
 
         $future = $this->caller->callAsync('com.myapp.test', [3, 5]);
 
-        // Recuperiamo il requestId dalla registry
+        // Retrieve the requestId from the registry
         $pending = collect(
             (new ReflectionProperty($this->registry, 'pending'))
                 ->getValue($this->registry),
         )->first();
 
-        // Simuliamo RESULT dal router
+        // Simulate RESULT from the router
         // [50, requestId, {}, [8]]
         $result = WampMessage::fromArray([50, $pending->requestId, [], [8]]);
         $this->caller->onResult($result);
@@ -52,7 +52,7 @@ describe('Caller', function () {
         expect($future->await())->toBe(8);
     });
 
-    it('rigetta il Future quando arriva ERROR', function () {
+    it('rejects the Future when ERROR arrives', function () {
         $this->session->shouldReceive('send')->once();
 
         $future = $this->caller->callAsync('com.myapp.test', [3, 5]);
@@ -62,7 +62,7 @@ describe('Caller', function () {
                 ->getValue($this->registry),
         )->first();
 
-        // Simuliamo ERROR dal router
+        // Simulate ERROR from the router
         // [8, CALL, requestId, {}, "wamp.error.no_such_procedure"]
         $error = WampMessage::fromArray([8, 48, $pending->requestId, [], 'wamp.error.no_such_procedure']);
         $this->caller->onError($error);
@@ -71,8 +71,8 @@ describe('Caller', function () {
             ->toThrow(RpcException::class, 'no_such_procedure');
     });
 
-    it('ignora RESULT per requestId sconosciuto', function () {
-        // Non deve lanciare eccezioni
+    it('ignores RESULT for an unknown requestId', function () {
+        // Must not throw
         $unknown = WampMessage::fromArray([50, 99999, [], [42]]);
         $this->caller->onResult($unknown);
 

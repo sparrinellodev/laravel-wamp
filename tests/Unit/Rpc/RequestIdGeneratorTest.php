@@ -8,13 +8,13 @@ describe('RequestIdGenerator', function () {
         $this->generator = new RequestIdGenerator;
     });
 
-    it('genera un intero positivo', function () {
+    it('generates a positive integer', function () {
         expect($this->generator->generate())
             ->toBeInt()
             ->toBeGreaterThan(0);
     });
 
-    it('rispetta il range WAMP [1, 2^53]', function () {
+    it('stays within the WAMP range [1, 2^53]', function () {
         $id = $this->generator->generate();
 
         expect($id)
@@ -22,14 +22,14 @@ describe('RequestIdGenerator', function () {
             ->toBeLessThanOrEqual(9007199254740992);
     });
 
-    it('genera ID diversi in chiamate successive', function () {
+    it('generates different IDs on successive calls', function () {
         $ids = array_map(
             fn () => $this->generator->generate(),
             range(1, 100),
         );
 
-        // Con 100 ID casuali in un range di 2^53 la probabilità
-        // di collisione è astronomicamente bassa
+        // With 100 random IDs in a 2^53 range the probability
+        // of a collision is astronomically low
         expect(count(array_unique($ids)))->toBe(100);
     });
 });

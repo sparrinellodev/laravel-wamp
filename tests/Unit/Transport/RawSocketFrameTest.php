@@ -11,13 +11,13 @@ describe('RawSocketFrame', function () {
 
     describe('encode()', function () {
 
-        it('produce un frame di almeno 4 byte (header)', function () {
+        it('produces a frame of at least 4 bytes (header)', function () {
             $frame = RawSocketFrame::encode('');
 
             expect(strlen($frame))->toBe(4);
         });
 
-        it('include il payload dopo i 4 byte di header', function () {
+        it('appends the payload after the 4-byte header', function () {
             $payload = 'messaggio di test';
             $frame = RawSocketFrame::encode($payload);
 
@@ -25,7 +25,7 @@ describe('RawSocketFrame', function () {
                 ->and(substr($frame, 4))->toBe($payload);
         });
 
-        it('imposta il tipo corretto nel primo byte', function () {
+        it('sets the frame type in the first byte', function () {
             $regular = RawSocketFrame::encode('', RawSocketFrame::TYPE_REGULAR);
             $ping = RawSocketFrame::encode('', RawSocketFrame::TYPE_PING);
             $pong = RawSocketFrame::encode('', RawSocketFrame::TYPE_PONG);
@@ -40,8 +40,8 @@ describe('RawSocketFrame', function () {
             expect($bytes[1] & 0x0F)->toBe(RawSocketFrame::TYPE_PONG);
         });
 
-        it('codifica la lunghezza del payload in big-endian su 3 byte', function () {
-            $payload = str_repeat('A', 300); // 300 byte
+        it('encodes the payload length as 3-byte big-endian', function () {
+            $payload = str_repeat('A', 300); // 300 bytes
             $frame = RawSocketFrame::encode($payload);
 
             $bytes = unpack('C4', substr($frame, 0, 4));
@@ -50,7 +50,7 @@ describe('RawSocketFrame', function () {
             expect($length)->toBe(300);
         });
 
-        it('gestisce payload vuoto', function () {
+        it('handles an empty payload', function () {
             $frame = RawSocketFrame::encode('');
             $bytes = unpack('C4', $frame);
 
@@ -58,8 +58,8 @@ describe('RawSocketFrame', function () {
             expect($length)->toBe(0);
         });
 
-        it('lancia TransportException per payload troppo grande', function () {
-            // 0xFFFFFF + 1 = troppo grande
+        it('throws TransportException for an oversized payload', function () {
+            // 0xFFFFFF + 1 = too large
             $payload = str_repeat('X', 0xFFFFFF + 1);
             RawSocketFrame::encode($payload);
         })->throws(TransportException::class, 'Payload too large');
@@ -71,8 +71,8 @@ describe('RawSocketFrame', function () {
 
     describe('decodeHeader()', function () {
 
-        it('decodifica correttamente tipo e lunghezza', function () {
-            // Creiamo un header per un frame regular con payload di 1234 byte
+        it('decodes type and length', function () {
+            // Build a header for a regular frame with a 1234-byte payload
             $length = 1234;
             $header = pack('C', RawSocketFrame::TYPE_REGULAR)
                 .pack('C', ($length >> 16) & 0xFF)
@@ -85,7 +85,7 @@ describe('RawSocketFrame', function () {
                 ->and($result['length'])->toBe(1234);
         });
 
-        it('riconosce il tipo ping', function () {
+        it('recognizes the ping type', function () {
             $frame = RawSocketFrame::ping('test');
             $header = substr($frame, 0, 4);
             $result = RawSocketFrame::decodeHeader($header);
@@ -93,7 +93,7 @@ describe('RawSocketFrame', function () {
             expect($result['type'])->toBe(RawSocketFrame::TYPE_PING);
         });
 
-        it('riconosce il tipo pong', function () {
+        it('recognizes the pong type', function () {
             $frame = RawSocketFrame::pong('test');
             $header = substr($frame, 0, 4);
             $result = RawSocketFrame::decodeHeader($header);
@@ -101,8 +101,8 @@ describe('RawSocketFrame', function () {
             expect($result['type'])->toBe(RawSocketFrame::TYPE_PONG);
         });
 
-        it('lancia TransportException per header di lunghezza errata', function () {
-            RawSocketFrame::decodeHeader('abc'); // solo 3 byte
+        it('throws TransportException for a header of the wrong length', function () {
+            RawSocketFrame::decodeHeader('abc'); // only 3 bytes
         })->throws(TransportException::class, '4 byte');
     });
 
@@ -112,7 +112,7 @@ describe('RawSocketFrame', function () {
 
     describe('round-trip encode/decode', function () {
 
-        it('encode e decodeHeader sono coerenti', function () {
+        it('keeps encode and decodeHeader consistent', function () {
             $payload = 'messaggio WAMP di test con caratteri speciali: àèìòù';
             $frame = RawSocketFrame::encode($payload);
             $header = substr($frame, 0, 4);
@@ -125,12 +125,12 @@ describe('RawSocketFrame', function () {
     });
 
     // -------------------------------------------------------------------------
-    // ping() e pong()
+    // ping() and pong()
     // -------------------------------------------------------------------------
 
-    describe('ping() e pong()', function () {
+    describe('ping() and pong()', function () {
 
-        it('ping() crea un frame ping con payload', function () {
+        it('ping() creates a ping frame with a payload', function () {
             $frame = RawSocketFrame::ping('test-ping');
             $header = RawSocketFrame::decodeHeader(substr($frame, 0, 4));
 
@@ -139,7 +139,7 @@ describe('RawSocketFrame', function () {
                 ->and(substr($frame, 4))->toBe('test-ping');
         });
 
-        it('pong() crea un frame pong con payload', function () {
+        it('pong() creates a pong frame with a payload', function () {
             $frame = RawSocketFrame::pong('test-pong');
             $header = RawSocketFrame::decodeHeader(substr($frame, 0, 4));
 
@@ -148,7 +148,7 @@ describe('RawSocketFrame', function () {
                 ->and(substr($frame, 4))->toBe('test-pong');
         });
 
-        it('ping() funziona con payload vuoto', function () {
+        it('ping() works with an empty payload', function () {
             $frame = RawSocketFrame::ping();
             $header = RawSocketFrame::decodeHeader(substr($frame, 0, 4));
 

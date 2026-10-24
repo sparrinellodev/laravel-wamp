@@ -5,7 +5,7 @@ use Hermod\LaravelWamp\Serializer\CborSerializer;
 
 describe('CborSerializer', function () {
 
-    it('serializza un array in CBOR', function () {
+    it('serializes an array to CBOR', function () {
         $serializer = new CborSerializer;
 
         $data = [1, 'hello', true, null];
@@ -16,7 +16,7 @@ describe('CborSerializer', function () {
         expect($result)->not->toBeEmpty();
     });
 
-    it('deserializza CBOR in array', function () {
+    it('deserializes CBOR to an array', function () {
         $serializer = new CborSerializer;
 
         $data = [1, 'hello', true, null];
@@ -27,7 +27,7 @@ describe('CborSerializer', function () {
         expect($decoded)->toBe($data);
     });
 
-    it('è simmetrico (serialize → deserialize)', function () {
+    it('round-trips data (serialize → deserialize)', function () {
         $serializer = new CborSerializer;
 
         $data = [
@@ -47,7 +47,7 @@ describe('CborSerializer', function () {
         expect($result)->toBe($data);
     });
 
-    it('gestisce mappe associative correttamente', function () {
+    it('handles associative maps', function () {
         $serializer = new CborSerializer;
 
         $data = [
@@ -63,18 +63,18 @@ describe('CborSerializer', function () {
         expect($result)->toBe($data);
     });
 
-    it('lancia eccezione per tipo non supportato', function () {
+    it('throws for an unsupported type', function () {
         $serializer = new CborSerializer;
 
         $data = [
-            'invalid' => fopen('php://memory', 'r'), // resource → non supportato
+            'invalid' => fopen('php://memory', 'r'), // resource → unsupported
         ];
 
         expect(fn() => $serializer->serialize($data))
             ->toThrow(SerializationException::class);
     });
 
-    it('lancia eccezione per CBOR non valido', function () {
+    it('throws for invalid CBOR', function () {
         $serializer = new CborSerializer;
 
         $invalid = 'not-valid-cbor';
@@ -83,14 +83,14 @@ describe('CborSerializer', function () {
             ->toThrow(SerializationException::class);
     });
 
-    it('restituisce il subprotocol corretto', function () {
+    it('returns the correct subprotocol', function () {
         $serializer = new CborSerializer;
 
         expect($serializer->subprotocol())
             ->toBe('wamp.2.cbor');
     });
 
-    it('gestisce interi negativi e positivi', function () {
+    it('handles negative and positive integers', function () {
         $serializer = new CborSerializer;
 
         $data = [0, 1, -1, 42, -999];
@@ -102,8 +102,8 @@ describe('CborSerializer', function () {
         expect($result)->toBe($data);
     });
 
-    it('gestisce interi a 64-bit (session ID WAMP)', function () {
-        $sessionId = 3084194912322238; // Tipico session ID Crossbar.io
+    it('handles 64-bit integers (WAMP session IDs)', function () {
+        $sessionId = 3084194912322238; // Typical Crossbar.io session ID
         $data      = [2, $sessionId, []];
 
         $encoded = (new CborSerializer())->serialize($data);

@@ -7,10 +7,10 @@ use Hermod\LaravelWamp\Reconnect\ReconnectManager;
 describe('ReconnectManager', function () {
 
     // -------------------------------------------------------------------------
-    // Stato iniziale
+    // Initial state
     // -------------------------------------------------------------------------
 
-    it('parte non in stato di reconnect', function () {
+    it('does not start in reconnecting state', function () {
         $manager = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: true,
@@ -19,7 +19,7 @@ describe('ReconnectManager', function () {
         expect($manager->isReconnecting())->toBeFalse();
     });
 
-    it('riconosce se è abilitato o disabilitato', function () {
+    it('reports whether it is enabled or disabled', function () {
         $enabled = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: true,
@@ -34,10 +34,10 @@ describe('ReconnectManager', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Reconnect riuscito
+    // Successful reconnect
     // -------------------------------------------------------------------------
 
-    it('chiama onSuccess dopo reconnect riuscito', function () {
+    it('calls onSuccess after a successful reconnect', function () {
         $manager = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: true,
@@ -49,7 +49,7 @@ describe('ReconnectManager', function () {
         $manager->reconnect(
             connectFn: function () use (&$connectCalls) {
                 $connectCalls++;
-                // Riesce al primo tentativo
+                // Succeeds on the first attempt
             },
             onSuccess: function () use (&$successCalled) {
                 $successCalled = true;
@@ -60,7 +60,7 @@ describe('ReconnectManager', function () {
             ->and($connectCalls)->toBe(1);
     });
 
-    it('riprova dopo fallimento e riesce al secondo tentativo', function () {
+    it('retries after a failure and succeeds on the second attempt', function () {
         $manager = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: true,
@@ -75,7 +75,7 @@ describe('ReconnectManager', function () {
                 if ($attempts < 2) {
                     throw new RuntimeException('Connessione fallita');
                 }
-                // Riesce al secondo tentativo
+                // Succeeds on the second attempt
             },
             onSuccess: function () use (&$successCalled) {
                 $successCalled = true;
@@ -87,10 +87,10 @@ describe('ReconnectManager', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Reconnect fallito
+    // Failed reconnect
     // -------------------------------------------------------------------------
 
-    it('lancia ReconnectException quando i tentativi si esauriscono', function () {
+    it('throws ReconnectException when attempts are exhausted', function () {
         $manager = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: true,
@@ -112,10 +112,10 @@ describe('ReconnectManager', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Reconnect disabilitato
+    // Reconnect disabled
     // -------------------------------------------------------------------------
 
-    it('lancia ReconnectException immediatamente se disabilitato', function () {
+    it('throws ReconnectException immediately when disabled', function () {
         $manager = new ReconnectManager(
             strategy: new ExponentialBackoffStrategy(3, 0.001, 1.0, 2.0),
             enabled: false,
@@ -128,16 +128,16 @@ describe('ReconnectManager', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Reset dopo reconnect
+    // Reset after reconnect
     // -------------------------------------------------------------------------
 
-    it('resetta la strategy dopo reconnect riuscito', function () {
+    it('resets the strategy after a successful reconnect', function () {
         $strategy = new ExponentialBackoffStrategy(5, 0.001, 1.0, 2.0);
         $manager = new ReconnectManager(strategy: $strategy, enabled: true);
 
         $attempts = 0;
 
-        // Prima reconnect — fallisce 2 volte poi riesce
+        // First reconnect — fails twice, then succeeds
         $manager->reconnect(
             connectFn: function () use (&$attempts) {
                 $attempts++;
@@ -148,7 +148,7 @@ describe('ReconnectManager', function () {
             onSuccess: fn () => null,
         );
 
-        // Dopo il reset la strategy dovrebbe ripartire da 0
+        // After the reset the strategy should start again from 0
         expect($strategy->attempts())->toBe(0)
             ->and($strategy->nextDelay())->toBe(0.001);
     });

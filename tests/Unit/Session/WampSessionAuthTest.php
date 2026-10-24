@@ -24,7 +24,7 @@ describe('WampSession — Auth', function () {
 
     describe('Anonymous auth', function () {
 
-        it('stabilisce la sessione con WELCOME dopo HELLO anonymous', function () {
+        it('establishes the session on WELCOME after an anonymous HELLO', function () {
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,
@@ -38,7 +38,7 @@ describe('WampSession — Auth', function () {
             $this->transport->shouldReceive('send')->once()->withArgs(function (string $raw) {
                 $data = json_decode($raw, true);
 
-                // Verifica che HELLO contenga authmethods anonymous
+                // HELLO must list anonymous in authmethods
                 return $data[0] === 1
                     && $data[1] === 'realm1'
                     && in_array('anonymous', $data[2]['authmethods'] ?? []);
@@ -51,7 +51,7 @@ describe('WampSession — Auth', function () {
                 ->and($session->getSessionId())->toBe(111222);
         });
 
-        it('non invia authid nel HELLO per anonymous', function () {
+        it('does not send authid in HELLO for anonymous', function () {
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,
@@ -80,7 +80,7 @@ describe('WampSession — Auth', function () {
 
     describe('Ticket auth', function () {
 
-        it('gestisce la sequenza HELLO → CHALLENGE → AUTHENTICATE → WELCOME', function () {
+        it('handles the HELLO → CHALLENGE → AUTHENTICATE → WELCOME sequence', function () {
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,
@@ -93,26 +93,26 @@ describe('WampSession — Auth', function () {
 
             $this->transport->shouldReceive('connect')->once();
 
-            // 1° send → HELLO
-            // 2° send → AUTHENTICATE con il ticket
+            // 1st send → HELLO
+            // 2nd send → AUTHENTICATE with the ticket
             $this->transport->shouldReceive('send')->twice()->withArgs(function (string $raw) {
                 $data = json_decode($raw, true);
 
                 if ($data[0] === 1) {
-                    // HELLO — verifica authid e authmethod
+                    // HELLO — check authid and authmethod
                     return $data[2]['authid'] === 'user123'
                         && in_array('ticket', $data[2]['authmethods'] ?? []);
                 }
 
                 if ($data[0] === 5) {
-                    // AUTHENTICATE — verifica che contenga il ticket
+                    // AUTHENTICATE — must carry the ticket
                     return $data[1] === 'my-ticket';
                 }
 
                 return false;
             });
 
-            // 1° receive → CHALLENGE, 2° receive → WELCOME
+            // 1st receive → CHALLENGE, 2nd receive → WELCOME
             $this->transport->shouldReceive('receive')
                 ->twice()
                 ->andReturn($challenge, $welcome);
@@ -130,7 +130,7 @@ describe('WampSession — Auth', function () {
 
     describe('WAMP-CRA auth', function () {
 
-        it('gestisce la sequenza HELLO → CHALLENGE → AUTHENTICATE con HMAC', function () {
+        it('handles the HELLO → CHALLENGE → AUTHENTICATE sequence with HMAC', function () {
             $secret = 'my-cra-secret';
             $challenge = 'wampcra-challenge-string';
 
@@ -153,7 +153,7 @@ describe('WampSession — Auth', function () {
                 $data = json_decode($raw, true);
 
                 if ($data[0] === 5) {
-                    // AUTHENTICATE — verifica firma HMAC
+                    // AUTHENTICATE — check the HMAC signature
                     return $data[1] === $expectedSignature;
                 }
 
@@ -171,12 +171,12 @@ describe('WampSession — Auth', function () {
     });
 
     // -------------------------------------------------------------------------
-    // Errori di autenticazione
+    // Authentication errors
     // -------------------------------------------------------------------------
 
-    describe('Errori auth', function () {
+    describe('Auth errors', function () {
 
-        it('lancia AuthenticationException quando riceve ABORT con errore auth', function () {
+        it('throws AuthenticationException on ABORT with an auth error', function () {
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,
@@ -196,7 +196,7 @@ describe('WampSession — Auth', function () {
                 ->toThrow(AuthenticationException::class, 'not_authorized');
         });
 
-        it('lancia WampProtocolException per ABORT non legato all\'auth', function () {
+        it('throws WampProtocolException on ABORT unrelated to auth', function () {
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,
@@ -215,8 +215,8 @@ describe('WampSession — Auth', function () {
                 ->toThrow(WampProtocolException::class, 'no_such_realm');
         });
 
-        it('lancia AuthenticationException per CHALLENGE su authenticator che non la supporta', function () {
-            // Anonymous non supporta challenge — se il router la manda è un errore
+        it('throws AuthenticationException on CHALLENGE for an authenticator that does not support it', function () {
+            // Anonymous does not support challenges — receiving one is an error
             $session = new WampSession(
                 $this->transport,
                 $this->serializer,

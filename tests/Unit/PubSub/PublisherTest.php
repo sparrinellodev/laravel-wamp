@@ -23,7 +23,7 @@ describe('Publisher', function () {
 
     describe('publish()', function () {
 
-        it('invia PUBLISH senza opzione acknowledge', function () {
+        it('sends PUBLISH without the acknowledge option', function () {
             $this->session
                 ->shouldReceive('send')
                 ->once()
@@ -36,7 +36,7 @@ describe('Publisher', function () {
             $this->publisher->publish('com.myapp.test', []);
         });
 
-        it('invia un messaggio PUBLISH senza acknowledge', function () {
+        it('sends associative data as kwargs in PUBLISH', function () {
             $this->session
                 ->shouldReceive('send')
                 ->once()
@@ -50,7 +50,7 @@ describe('Publisher', function () {
             $this->publisher->publish('com.myapp.notifiche', ['dato' => 'valore']);
         });
 
-        it('invia PUBLISH con args e kwargs', function () {
+        it('sends PUBLISH with positional args', function () {
             $this->session
                 ->shouldReceive('send')
                 ->once()
@@ -68,7 +68,7 @@ describe('Publisher', function () {
 
     describe('publishWithAck()', function () {
 
-        it('restituisce un Future', function () {
+        it('returns a Future', function () {
             $this->session->shouldReceive('send')->once();
 
             $future = $this->publisher->publishWithAck('com.myapp.test', []);
@@ -76,7 +76,7 @@ describe('Publisher', function () {
             expect($future)->toBeInstanceOf(Future::class);
         });
 
-        it('invia PUBLISH con opzione acknowledge=true', function () {
+        it('sends PUBLISH with the acknowledge=true option', function () {
             $this->session
                 ->shouldReceive('send')
                 ->once()
@@ -89,20 +89,20 @@ describe('Publisher', function () {
             $this->publisher->publishWithAck('com.myapp.test', []);
         });
 
-        it('risolve il Future quando arriva PUBLISHED', function () {
+        it('resolves the Future when PUBLISHED arrives', function () {
             $this->session->shouldReceive('send')->once();
 
             $future = $this->publisher->publishWithAck('com.myapp.test', []);
 
-            // Recuperiamo il requestId dal messaggio inviato
+            // Retrieve the requestId of the sent message
             $requestId = null;
             $this->session
                 ->shouldReceive('send')
-                ->never(); // non vogliamo un secondo send
+                ->never(); // no second send expected
 
-            // Simuliamo PUBLISHED dal router
+            // Simulate PUBLISHED from the router
             // [17, requestId, publicationId]
-            // Prima dobbiamo trovare il requestId
+            // First we need to find the requestId
             $pendingAcks = (new ReflectionProperty($this->publisher, 'pendingAcks'))
                 ->getValue($this->publisher);
 
@@ -114,7 +114,7 @@ describe('Publisher', function () {
             expect($future->await())->toBe(5555);
         });
 
-        it('rigetta il Future quando arriva ERROR su PUBLISH', function () {
+        it('rejects the Future when ERROR for PUBLISH arrives', function () {
             $this->session->shouldReceive('send')->once();
 
             $future = $this->publisher->publishWithAck('com.myapp.test', []);
@@ -132,7 +132,7 @@ describe('Publisher', function () {
                 ->toThrow(PubSubException::class);
         });
 
-        it('ignora PUBLISHED per requestId sconosciuto', function () {
+        it('ignores PUBLISHED for an unknown requestId', function () {
             $unknown = WampMessage::fromArray([17, 99999, 1234]);
             $this->publisher->onPublished($unknown);
 

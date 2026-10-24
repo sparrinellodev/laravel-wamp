@@ -11,7 +11,7 @@ describe('MessageFactory — PubSub', function () {
 
     describe('publish()', function () {
 
-        it('costruisce un messaggio PUBLISH senza acknowledge', function () {
+        it('builds a PUBLISH message without acknowledge', function () {
             $message = MessageFactory::publish(
                 requestId: 1,
                 topic: 'com.myapp.notifiche',
@@ -23,12 +23,12 @@ describe('MessageFactory — PubSub', function () {
                 ->and($message->get(3))->toBe('com.myapp.notifiche')
                 ->and($message->get(4))->toBe(['ciao']);
 
-            // options non deve avere acknowledge
+            // options must not contain acknowledge
             $options = $message->get(2);
             expect(isset($options->acknowledge))->toBeFalse();
         });
 
-        it('costruisce un messaggio PUBLISH con acknowledge=true', function () {
+        it('builds a PUBLISH message with acknowledge=true', function () {
             $message = MessageFactory::publish(
                 requestId: 1,
                 topic: 'com.myapp.notifiche',
@@ -40,7 +40,7 @@ describe('MessageFactory — PubSub', function () {
             expect($message->get(2))->toEqual((object) ['acknowledge' => true]);
         });
 
-        it('include kwargs nel messaggio', function () {
+        it('includes kwargs in the message', function () {
             $message = MessageFactory::publish(
                 requestId: 1,
                 topic: 'com.myapp.test',
@@ -48,26 +48,26 @@ describe('MessageFactory — PubSub', function () {
                 kwargs: ['nome' => 'Mario'],
             );
 
-            // kwargs come stdClass quando non vuoto
+            // kwargs is a stdClass when not empty
             expect($message->get(5))->not->toBeEmpty();
         });
 
-        it('sposta args associativo in kwargs automaticamente', function () {
+        it('moves associative args into kwargs automatically', function () {
             $message = MessageFactory::publish(
                 requestId: 1,
                 topic: 'com.myapp.test',
                 args: ['messaggio' => 'ciao!'],
             );
 
-            // args deve essere lista vuota
+            // args must be an empty list
             expect($message->get(4))->toBe([]);
 
-            // kwargs deve contenere il dato associativo
+            // kwargs must contain the associative data
             $kwargs = (array) $message->get(5);
             expect($kwargs)->toBe(['messaggio' => 'ciao!']);
         });
 
-        it('mantiene lista posizionale in args', function () {
+        it('keeps a positional list in args', function () {
             $message = MessageFactory::publish(
                 requestId: 1,
                 topic: 'com.myapp.test',
@@ -84,7 +84,7 @@ describe('MessageFactory — PubSub', function () {
 
     describe('subscribe()', function () {
 
-        it('costruisce un messaggio SUBSCRIBE corretto', function () {
+        it('builds a valid SUBSCRIBE message', function () {
             $message = MessageFactory::subscribe(42, 'com.myapp.notifiche');
 
             expect($message->type())->toBe(MessageType::SUBSCRIBE)
@@ -92,11 +92,11 @@ describe('MessageFactory — PubSub', function () {
                 ->and($message->get(3))->toBe('com.myapp.notifiche');
         });
 
-        it('include options come oggetto vuoto', function () {
+        it('encodes options as an empty object', function () {
             $message = MessageFactory::subscribe(1, 'com.myapp.test');
             $raw = json_encode($message->toArray());
 
-            // options deve essere {} non []
+            // options must be {}, not []
             expect($raw)->toContain('{}');
         });
     });
@@ -107,7 +107,7 @@ describe('MessageFactory — PubSub', function () {
 
     describe('unsubscribe()', function () {
 
-        it('costruisce un messaggio UNSUBSCRIBE corretto', function () {
+        it('builds a valid UNSUBSCRIBE message', function () {
             $message = MessageFactory::unsubscribe(99, 7777);
 
             expect($message->type())->toBe(MessageType::UNSUBSCRIBE)

@@ -11,7 +11,7 @@ describe('RawSocketHandshake', function () {
 
     describe('build()', function () {
 
-        it('costruisce un handshake JSON valido di 4 byte', function () {
+        it('builds a valid 4-byte JSON handshake', function () {
             $result = RawSocketHandshake::build('wamp.2.json');
 
             expect(strlen($result))->toBe(4);
@@ -20,7 +20,7 @@ describe('RawSocketHandshake', function () {
             expect($bytes[1])->toBe(0x7F); // magic byte
         });
 
-        it('usa il codice serializzatore corretto per JSON', function () {
+        it('uses the correct serializer code for JSON', function () {
             $result = RawSocketHandshake::build('wamp.2.json');
             $bytes = unpack('C4', $result);
 
@@ -28,7 +28,7 @@ describe('RawSocketHandshake', function () {
             expect($serializerCode)->toBe(1); // JSON = 1
         });
 
-        it('usa il codice serializzatore corretto per MessagePack', function () {
+        it('uses the correct serializer code for MessagePack', function () {
             $result = RawSocketHandshake::build('wamp.2.msgpack');
             $bytes = unpack('C4', $result);
 
@@ -36,7 +36,7 @@ describe('RawSocketHandshake', function () {
             expect($serializerCode)->toBe(2); // MessagePack = 2
         });
 
-        it('usa il codice serializzatore corretto per CBOR', function () {
+        it('uses the correct serializer code for CBOR', function () {
             $result = RawSocketHandshake::build('wamp.2.cbor');
             $bytes = unpack('C4', $result);
 
@@ -44,7 +44,7 @@ describe('RawSocketHandshake', function () {
             expect($serializerCode)->toBe(3); // CBOR = 3
         });
 
-        it('imposta i byte riservati a zero', function () {
+        it('sets the reserved bytes to zero', function () {
             $result = RawSocketHandshake::build('wamp.2.json');
             $bytes = unpack('C4', $result);
 
@@ -52,7 +52,7 @@ describe('RawSocketHandshake', function () {
                 ->and($bytes[4])->toBe(0x00);
         });
 
-        it('lancia TransportException per serializzatore non supportato', function () {
+        it('throws TransportException for an unsupported serializer', function () {
             RawSocketHandshake::build('wamp.2.sconosciuto');
         })->throws(TransportException::class, 'Unsupported serializer for RawSocket');
     });
@@ -63,8 +63,8 @@ describe('RawSocketHandshake', function () {
 
     describe('parse()', function () {
 
-        it('analizza una risposta valida JSON', function () {
-            // Costruiamo una risposta valida: magic + maxLen=15 + json=1 + 0 + 0
+        it('parses a valid JSON response', function () {
+            // Build a valid response: magic + maxLen=15 + json=1 + 0 + 0
             $byte1 = (15 << 4) | 1; // maxLength=15, json=1
             $response = pack('C4', 0x7F, $byte1, 0x00, 0x00);
 
@@ -74,7 +74,7 @@ describe('RawSocketHandshake', function () {
                 ->and($result['max_message_size'])->toBe(2 ** 24);
         });
 
-        it('analizza una risposta valida MessagePack', function () {
+        it('parses a valid MessagePack response', function () {
             $byte1 = (15 << 4) | 2; // maxLength=15, msgpack=2
             $response = pack('C4', 0x7F, $byte1, 0x00, 0x00);
 
@@ -83,18 +83,18 @@ describe('RawSocketHandshake', function () {
             expect($result['subprotocol'])->toBe('wamp.2.msgpack');
         });
 
-        it('lancia TransportException per lunghezza risposta errata', function () {
-            RawSocketHandshake::parse('abc'); // solo 3 byte
+        it('throws TransportException for a response of the wrong length', function () {
+            RawSocketHandshake::parse('abc'); // only 3 bytes
         })->throws(TransportException::class, '4 byte');
 
-        it('lancia TransportException per magic byte errato', function () {
-            $response = pack('C4', 0x00, 0xF1, 0x00, 0x00); // magic errato
+        it('throws TransportException for an invalid magic byte', function () {
+            $response = pack('C4', 0x00, 0xF1, 0x00, 0x00); // invalid magic
             RawSocketHandshake::parse($response);
         })->throws(TransportException::class, 'Invalid RawSocket magic byte');
 
-        it('lancia TransportException quando il router rifiuta la connessione', function () {
-            // maxLength=0 significa errore, il nibble basso è il codice errore
-            $byte1 = (0 << 4) | 1; // maxLength=0 → errore, codice=1 (serializzatore non supportato)
+        it('throws TransportException when the router refuses the connection', function () {
+            // maxLength=0 means error; the low nibble is the error code
+            $byte1 = (0 << 4) | 1; // maxLength=0 → error, code=1 (unsupported serializer)
             $response = pack('C4', 0x7F, $byte1, 0x00, 0x00);
 
             RawSocketHandshake::parse($response);

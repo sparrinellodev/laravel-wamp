@@ -9,23 +9,23 @@ describe('AnonymousAuthenticator', function () {
         $this->auth = new AnonymousAuthenticator;
     });
 
-    it('restituisce il metodo corretto', function () {
+    it('returns the correct method', function () {
         expect($this->auth->method())->toBe(AuthMethod::Anonymous);
     });
 
-    it('non ha authId', function () {
+    it('has no authId', function () {
         expect($this->auth->authId())->toBeNull();
     });
 
-    it('non ha authExtra', function () {
+    it('has no authExtra', function () {
         expect($this->auth->authExtra())->toBe([]);
     });
 
-    it('non richiede challenge', function () {
+    it('does not require a challenge', function () {
         expect($this->auth->requiresChallenge())->toBeFalse();
     });
 
-    it('restituisce null per handleChallenge', function () {
+    it('returns null from handleChallenge', function () {
         expect($this->auth->handleChallenge('qualsiasi challenge'))->toBeNull();
     });
 });

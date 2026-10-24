@@ -28,7 +28,7 @@ describe('MessageDispatcher — PubSub', function () {
 
     afterEach(fn () => Mockery::close());
 
-    it('smista PUBLISHED a Publisher::onPublished()', function () {
+    it('routes PUBLISHED to Publisher::onPublished()', function () {
         $this->publisher
             ->shouldReceive('onPublished')
             ->once();
@@ -37,7 +37,7 @@ describe('MessageDispatcher — PubSub', function () {
         $this->dispatcher->dispatch($message);
     });
 
-    it('smista SUBSCRIBED a Subscriber::onSubscribed()', function () {
+    it('routes SUBSCRIBED to Subscriber::onSubscribed()', function () {
         $this->subscriber
             ->shouldReceive('onSubscribed')
             ->once();
@@ -46,7 +46,7 @@ describe('MessageDispatcher — PubSub', function () {
         $this->dispatcher->dispatch($message);
     });
 
-    it('smista UNSUBSCRIBED a Subscriber::onUnsubscribed()', function () {
+    it('routes UNSUBSCRIBED to Subscriber::onUnsubscribed()', function () {
         $this->subscriber
             ->shouldReceive('onUnsubscribed')
             ->once();
@@ -55,7 +55,7 @@ describe('MessageDispatcher — PubSub', function () {
         $this->dispatcher->dispatch($message);
     });
 
-    it('smista EVENT a Subscriber::onEvent()', function () {
+    it('routes EVENT to Subscriber::onEvent()', function () {
         $this->subscriber
             ->shouldReceive('onEvent')
             ->once();
@@ -64,7 +64,7 @@ describe('MessageDispatcher — PubSub', function () {
         $this->dispatcher->dispatch($message);
     });
 
-    it('smista ERROR su PUBLISH a Publisher::onError()', function () {
+    it('routes ERROR for PUBLISH to Publisher::onError()', function () {
         $this->publisher
             ->shouldReceive('onError')
             ->once();
@@ -74,7 +74,7 @@ describe('MessageDispatcher — PubSub', function () {
         $this->dispatcher->dispatch($message);
     });
 
-    it('non interferisce con lo smistamento RPC esistente', function () {
+    it('does not interfere with existing RPC routing', function () {
         $this->caller
             ->shouldReceive('onResult')
             ->once();

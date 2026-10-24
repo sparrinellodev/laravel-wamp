@@ -8,7 +8,7 @@ describe('WampMessage', function () {
 
     describe('fromArray()', function () {
 
-        it('crea un messaggio da un array valido', function () {
+        it('creates a message from a valid array', function () {
             $message = WampMessage::fromArray([2, 123456, []]);
 
             expect($message->type())->toBe(MessageType::WELCOME)
@@ -16,15 +16,15 @@ describe('WampMessage', function () {
                 ->and($message->get(2))->toBe([]);
         });
 
-        it('lancia eccezione per array vuoto', function () {
+        it('throws for an empty array', function () {
             WampMessage::fromArray([]);
         })->throws(InvalidMessageException::class);
 
-        it('lancia eccezione per tipo sconosciuto', function () {
+        it('throws for an unknown type', function () {
             WampMessage::fromArray([999, 'dato']);
         })->throws(InvalidMessageException::class, 'Unknown WAMP message type identifier: 999');
 
-        it('restituisce null per indice inesistente', function () {
+        it('returns null for a missing index', function () {
             $message = WampMessage::fromArray([2, 123456, []]);
             expect($message->get(99))->toBeNull();
         });
@@ -32,7 +32,7 @@ describe('WampMessage', function () {
 
     describe('create()', function () {
 
-        it('crea un messaggio con i parti corrette', function () {
+        it('creates a message with the correct parts', function () {
             $message = WampMessage::create(MessageType::CALL, 1, [], 'com.myapp.test', [42]);
 
             expect($message->type())->toBe(MessageType::CALL)
@@ -44,7 +44,7 @@ describe('WampMessage', function () {
 
     describe('toArray()', function () {
 
-        it('restituisce il payload completo', function () {
+        it('returns the full payload', function () {
             $data = [50, 1, [], [8]];
             $message = WampMessage::fromArray($data);
 

@@ -8,28 +8,28 @@ uses(TestCase::class);
 
 describe('WampServiceProvider — Auth', function () {
 
-    it('registra AuthenticatorFactory nel container', function () {
+    it('registers AuthenticatorFactory in the container', function () {
         expect(app(AuthenticatorFactory::class))
             ->toBeInstanceOf(AuthenticatorFactory::class);
     });
 
-    it('WampClientFactory riceve AuthenticatorFactory', function () {
+    it('injects AuthenticatorFactory into WampClientFactory', function () {
         $factory = app(WampClientFactory::class);
 
         expect($factory)->toBeInstanceOf(WampClientFactory::class);
     });
 
-    it('la configurazione default ha auth anonymous', function () {
+    it('uses anonymous auth in the default config', function () {
         expect(config('wamp.connections.default.auth.method'))
             ->toBe('anonymous');
     });
 
-    it('la configurazione default ha reconnect abilitato', function () {
+    it('enables reconnect in the default config', function () {
         expect(config('wamp.connections.default.reconnect.enabled'))
             ->toBeTrue();
     });
 
-    it('la configurazione default ha heartbeat abilitato', function () {
+    it('enables heartbeat in the default config', function () {
         expect(config('wamp.connections.default.heartbeat.enabled'))
             ->toBeTrue();
     });

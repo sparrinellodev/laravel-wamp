@@ -12,31 +12,31 @@ describe('TicketAuthenticator', function () {
         );
     });
 
-    it('restituisce il metodo corretto', function () {
+    it('returns the correct method', function () {
         expect($this->auth->method())->toBe(AuthMethod::Ticket);
     });
 
-    it('restituisce l\'authId corretto', function () {
+    it('returns the correct authId', function () {
         expect($this->auth->authId())->toBe('user123');
     });
 
-    it('non ha authExtra', function () {
+    it('has no authExtra', function () {
         expect($this->auth->authExtra())->toBe([]);
     });
 
-    it('richiede challenge', function () {
+    it('requires a challenge', function () {
         expect($this->auth->requiresChallenge())->toBeTrue();
     });
 
-    it('restituisce il ticket come risposta alla challenge', function () {
-        // Per Ticket auth la challenge del router viene ignorata
-        // e il ticket viene inviato direttamente come firma
+    it('returns the ticket as the challenge response', function () {
+        // For ticket auth the router challenge is ignored
+        // and the ticket is sent as-is as the signature
         $result = $this->auth->handleChallenge('challenge-ignorata');
 
         expect($result)->toBe('my-secret-ticket');
     });
 
-    it('restituisce sempre il ticket indipendentemente dalla challenge', function () {
+    it('always returns the ticket regardless of the challenge', function () {
         expect($this->auth->handleChallenge('challenge-1'))
             ->toBe('my-secret-ticket')
             ->and($this->auth->handleChallenge('challenge-2'))

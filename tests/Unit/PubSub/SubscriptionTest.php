@@ -4,7 +4,7 @@ use Hermod\LaravelWamp\PubSub\Subscription;
 
 describe('Subscription', function () {
 
-    it('memorizza correttamente i dati della sottoscrizione', function () {
+    it('stores the subscription data', function () {
         $handler = fn () => null;
 
         $subscription = new Subscription(
@@ -18,7 +18,7 @@ describe('Subscription', function () {
             ->and($subscription->handler)->toBe($handler);
     });
 
-    it('accetta qualsiasi callable come handler', function () {
+    it('accepts any callable as handler', function () {
         $closure = fn ($args) => $args;
         $invokable = new class
         {

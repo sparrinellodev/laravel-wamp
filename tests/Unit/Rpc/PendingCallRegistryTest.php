@@ -11,7 +11,7 @@ describe('PendingCallRegistry', function () {
         $this->registry = new PendingCallRegistry(new RequestIdGenerator);
     });
 
-    it('registra una chiamata pendente e restituisce un PendingCall', function () {
+    it('registers a pending call and returns a PendingCall', function () {
         $pending = $this->registry->register('com.myapp.test');
 
         expect($pending)
@@ -20,14 +20,14 @@ describe('PendingCallRegistry', function () {
             ->and($pending->requestId)->toBeInt();
     });
 
-    it('recupera una chiamata pendente tramite requestId', function () {
+    it('retrieves a pending call by requestId', function () {
         $pending = $this->registry->register('com.myapp.test');
         $retrieved = $this->registry->get($pending->requestId);
 
         expect($retrieved)->toBe($pending);
     });
 
-    it('rimuove la chiamata dopo pull()', function () {
+    it('removes the call after pull()', function () {
         $pending = $this->registry->register('com.myapp.test');
         $this->registry->pull($pending->requestId);
 
@@ -35,11 +35,11 @@ describe('PendingCallRegistry', function () {
             ->toThrow(RpcException::class);
     });
 
-    it('lancia eccezione per requestId inesistente', function () {
+    it('throws for an unknown requestId', function () {
         $this->registry->get(99999);
     })->throws(RpcException::class, 'No pending call found');
 
-    it('tiene traccia del conteggio corretto', function () {
+    it('keeps an accurate count', function () {
         expect($this->registry->count())->toBe(0)
             ->and($this->registry->isEmpty())->toBeTrue();
 
@@ -54,7 +54,7 @@ describe('PendingCallRegistry', function () {
         expect($this->registry->count())->toBe(1);
     });
 
-    it('rigetta tutte le chiamate pendenti con rejectAll()', function () {
+    it('rejects all pending calls with rejectAll()', function () {
         $p1 = $this->registry->register('com.myapp.uno');
         $p2 = $this->registry->register('com.myapp.due');
 
