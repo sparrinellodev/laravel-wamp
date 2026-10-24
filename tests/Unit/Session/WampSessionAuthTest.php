@@ -3,6 +3,7 @@
 use Hermod\LaravelWamp\Auth\AnonymousAuthenticator;
 use Hermod\LaravelWamp\Auth\TicketAuthenticator;
 use Hermod\LaravelWamp\Auth\WampCraAuthenticator;
+use Hermod\LaravelWamp\Contracts\TicketProviderContract;
 use Hermod\LaravelWamp\Contracts\TransportContract;
 use Hermod\LaravelWamp\Exceptions\AuthenticationException;
 use Hermod\LaravelWamp\Exceptions\WampProtocolException;
@@ -122,6 +123,38 @@ describe('WampSession — Auth', function () {
 
             expect($session->isEstablished())->toBeTrue()
                 ->and($session->getSessionId())->toBe(555666);
+        });
+
+        it('sends the ticket supplied by a provider in AUTHENTICATE', function () {
+            $provider = new class implements TicketProviderContract
+            {
+                public function ticket(?string $authId, array $extra = []): string
+                {
+                    return "jwt-for-{$authId}";
+                }
+            };
+
+            $session = new WampSession(
+                $this->transport,
+                $this->serializer,
+                'realm1',
+                new TicketAuthenticator('user123', $provider),
+            );
+
+            $this->transport->shouldReceive('connect')->once();
+            $this->transport->shouldReceive('send')->twice()->withArgs(function (string $raw) {
+                $data = json_decode($raw, true);
+
+                // HELLO passes through; AUTHENTICATE must carry the provider's ticket
+                return $data[0] !== 5 || $data[1] === 'jwt-for-user123';
+            });
+            $this->transport->shouldReceive('receive')
+                ->twice()
+                ->andReturn(json_encode([4, 'ticket', []]), json_encode([2, 555666, []]));
+
+            $session->hello();
+
+            expect($session->isEstablished())->toBeTrue();
         });
     });
 
