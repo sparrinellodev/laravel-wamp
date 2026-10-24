@@ -2,10 +2,12 @@
 
 All relevant changes to Hermod are documented in this file.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/it/1.0.0/),
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.0] - 2026-10-24
 
 ### Added
 

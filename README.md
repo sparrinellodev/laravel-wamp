@@ -60,6 +60,9 @@ WAMP_HEARTBEAT=true
 WAMP_HEARTBEAT_INTERVAL=30
 ```
 
+The `WAMP_AUTH_*` variables below configure the `default` connection; for other
+connections, set the same keys in their `auth` block in `config/wamp.php`.
+
 ### Ticket Authentication
 
 ```env
@@ -202,27 +205,27 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(WampServeStarted::class, function (WampServeStarted $event) {
 
             // Simple procedure — add two numbers
-            $event->client->register('com.myapp.somma', function (array $args): int {
+            $event->client->register('com.myapp.add', function (array $args): int {
                 return $args[0] + $args[1];
             });
 
             // Procedure with kwargs — personalized greeting
-            $event->client->register('com.myapp.saluta', function (array $args, array $kwargs): string {
-                $nome  = $kwargs['nome']  ?? 'Utente';
-                $titolo = $kwargs['titolo'] ?? '';
-                return "Ciao, {$titolo} {$nome}!";
+            $event->client->register('com.myapp.greet', function (array $args, array $kwargs): string {
+                $name  = $kwargs['name']  ?? 'User';
+                $title = $kwargs['title'] ?? '';
+                return "Hello, {$title} {$name}!";
             });
 
             // Procedure with access to the Laravel DB
-            $event->client->register('com.myapp.utente.trova', function (array $args): array {
+            $event->client->register('com.myapp.user.find', function (array $args): array {
                 $user = \App\Models\User::find($args[0]);
                 return $user?->toArray() ?? [];
             });
 
             // Procedure with error handling
-            $event->client->register('com.myapp.divisione', function (array $args): float {
+            $event->client->register('com.myapp.divide', function (array $args): float {
                 if ($args[1] === 0) {
-                    throw new \InvalidArgumentException('Divisione per zero non consentita.');
+                    throw new \InvalidArgumentException('Division by zero is not allowed.');
                 }
                 return $args[0] / $args[1];
             });
@@ -285,18 +288,18 @@ use Hermod\LaravelWamp\Laravel\Facades\Wamp;
 Wamp::connect();
 
 // Call with positional arguments
-$somma = Wamp::call('com.myapp.somma', [3, 5]);
+$sum = Wamp::call('com.myapp.add', [3, 5]);
 // → 8
 
 // Call with kwargs
-$saluto = Wamp::call('com.myapp.saluta', [], ['nome' => 'Mario', 'titolo' => 'Dr.']);
-// → "Ciao, Dr. Mario!"
+$greeting = Wamp::call('com.myapp.greet', [], ['name' => 'Mario', 'title' => 'Dr.']);
+// → "Hello, Dr. Mario!"
 
 // Call with error handling
 try {
-    $risultato = Wamp::call('com.myapp.divisione', [10, 0]);
-} catch (\Hermod\LaravelWamp\RpcException $e) {
-    Log::error("Errore RPC: {$e->getMessage()}", ['wamp_error' => $e->wampError]);
+    $result = Wamp::call('com.myapp.divide', [10, 0]);
+} catch (\Hermod\LaravelWamp\Exceptions\RpcException $e) {
+    Log::error("RPC error: {$e->getMessage()}", ['wamp_error' => $e->wampError]);
 }
 
 Wamp::disconnect();
@@ -311,21 +314,21 @@ use function Amp\Future\await;
 Wamp::connect();
 
 // Single asynchronous call
-$future = Wamp::callAsync('com.myapp.somma', [10, 20]);
+$future = Wamp::callAsync('com.myapp.add', [10, 20]);
 $result = $future->await();
 // → 30
 
 // Parallel calls — executed simultaneously
 $futures = [
-    'somma'   => Wamp::callAsync('com.myapp.somma',    [1, 2]),
-    'saluto'  => Wamp::callAsync('com.myapp.saluta',   [], ['nome' => 'Mario']),
-    'utente'  => Wamp::callAsync('com.myapp.utente.trova', [42]),
+    'sum'      => Wamp::callAsync('com.myapp.add',       [1, 2]),
+    'greeting' => Wamp::callAsync('com.myapp.greet',     [], ['name' => 'Mario']),
+    'user'     => Wamp::callAsync('com.myapp.user.find', [42]),
 ];
 
-$risultati = await($futures);
-// $risultati['somma']  → 3
-// $risultati['saluto'] → "Ciao, Mario!"
-// $risultati['utente'] → ['id' => 42, 'name' => '...']
+$results = await($futures);
+// $results['sum']      → 3
+// $results['greeting'] → "Hello, Mario!"
+// $results['user']     → ['id' => 42, 'name' => '...']
 
 Wamp::disconnect();
 ```
@@ -336,23 +339,23 @@ Wamp::disconnect();
 use Hermod\LaravelWamp\Laravel\Facades\Wamp;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/calcola/{a}/{b}', function (int $a, int $b) {
+Route::get('/add/{a}/{b}', function (int $a, int $b) {
     Wamp::connect();
-    $result = Wamp::call('com.myapp.somma', [$a, $b]);
+    $result = Wamp::call('com.myapp.add', [$a, $b]);
     Wamp::disconnect();
-    return response()->json(['risultato' => $result]);
+    return response()->json(['result' => $result]);
 });
 
-Route::get('/utente/{id}', function (int $id) {
+Route::get('/users/{id}', function (int $id) {
     Wamp::connect();
-    $utente = Wamp::call('com.myapp.utente.trova', [$id]);
+    $user = Wamp::call('com.myapp.user.find', [$id]);
     Wamp::disconnect();
 
-    if (empty($utente)) {
-        return response()->json(['error' => 'Utente non trovato'], 404);
+    if (empty($user)) {
+        return response()->json(['error' => 'User not found'], 404);
     }
 
-    return response()->json($utente);
+    return response()->json($user);
 });
 ```
 
@@ -360,16 +363,16 @@ Route::get('/utente/{id}', function (int $id) {
 
 ```bash
 # Call with positional arguments
-php artisan wamp:call com.myapp.somma 3 5
+php artisan wamp:call com.myapp.add 3 5
 
 # Calling with kwargs in JSON
-php artisan wamp:call com.myapp.saluta --kwargs='{"nome":"Mario","titolo":"Dr."}'
+php artisan wamp:call com.myapp.greet --kwargs='{"name":"Mario","title":"Dr."}'
 
 # Call on specific connection
-php artisan wamp:call com.myapp.somma 10 20 --connection=secure
+php artisan wamp:call com.myapp.add 10 20 --connection=secure
 
-# Output atteso:
-# ✓ Risultato (12.5ms):
+# Expected output:
+# ✓ Result (12.5ms):
 # 30
 ```
 
@@ -385,13 +388,13 @@ use Hermod\LaravelWamp\Laravel\Facades\Wamp;
 Wamp::connect();
 
 // Positional array → args
-Wamp::publish('com.myapp.notifiche', ['messaggio importante']);
+Wamp::publish('com.myapp.notifications', ['important message']);
 
 // Associative array → kwargs automatically
-Wamp::publish('com.myapp.ordini', ['ordine_id' => 123, 'stato' => 'spedito']);
+Wamp::publish('com.myapp.orders', ['order_id' => 123, 'status' => 'shipped']);
 
 // Args and kwargs combined
-Wamp::publish('com.myapp.eventi', [1, 2, 3], ['extra' => 'info']);
+Wamp::publish('com.myapp.events', [1, 2, 3], ['extra' => 'info']);
 
 Wamp::disconnect();
 ```
@@ -405,11 +408,11 @@ Wamp::connect();
 
 // Waiting for PUBLISHED confirmation from the router
 $publicationId = Wamp::publishWithAck(
-    'com.myapp.notifiche',
-    ['messaggio' => 'Ordine confermato!']
+    'com.myapp.notifications',
+    ['message' => 'Order confirmed!']
 )->await();
 
-Log::info("Messaggio pubblicato", ['publication_id' => $publicationId]);
+Log::info('Message published', ['publication_id' => $publicationId]);
 
 Wamp::disconnect();
 ```
@@ -423,22 +426,22 @@ use Hermod\LaravelWamp\Laravel\Facades\Wamp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class NotificaOrdineSpe­dito implements ShouldQueue
+class NotifyOrderShipped implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
-        private readonly int    $ordineId,
-        private readonly string $corriere,
+        private readonly int    $orderId,
+        private readonly string $carrier,
     ) {}
 
     public function handle(): void
     {
         Wamp::connect();
 
-        Wamp::publish('com.myapp.ordini.spediti', [], [
-            'ordine_id' => $this->ordineId,
-            'corriere'  => $this->corriere,
+        Wamp::publish('com.myapp.orders.shipped', [], [
+            'order_id'  => $this->orderId,
+            'carrier'   => $this->carrier,
             'timestamp' => now()->toISOString(),
         ]);
 
@@ -447,25 +450,25 @@ class NotificaOrdineSpe­dito implements ShouldQueue
 }
 ```
 
-#### Da un Observer Eloquent
+#### From an Eloquent Observer
 
 ```php
 namespace App\Observers;
 
-use App\Models\Ordine;
+use App\Models\Order;
 use Hermod\LaravelWamp\Laravel\Facades\Wamp;
 
-class OrdineObserver
+class OrderObserver
 {
-    public function updated(Ordine $ordine): void
+    public function updated(Order $order): void
     {
-        if ($ordine->isDirty('stato')) {
+        if ($order->isDirty('status')) {
             Wamp::connect();
 
-            Wamp::publish('com.myapp.ordini.aggiornati', [], [
-                'ordine_id'  => $ordine->id,
-                'stato_nuovo' => $ordine->stato,
-                'stato_vecchio' => $ordine->getOriginal('stato'),
+            Wamp::publish('com.myapp.orders.updated', [], [
+                'order_id'   => $order->id,
+                'new_status' => $order->status,
+                'old_status' => $order->getOriginal('status'),
             ]);
 
             Wamp::disconnect();
@@ -488,30 +491,30 @@ use Hermod\LaravelWamp\Laravel\Events\WampServeStarted;
 Event::listen(WampServeStarted::class, function (WampServeStarted $event) {
 
     // Simple subscription
-    $event->client->subscribe('com.myapp.notifiche', function (array $args, array $kwargs): void {
-        Log::info('Notifica ricevuta', [
+    $event->client->subscribe('com.myapp.notifications', function (array $args, array $kwargs): void {
+        Log::info('Notification received', [
             'args'   => $args,
             'kwargs' => $kwargs,
         ]);
     });
 
     // Subscription with business logic
-    $event->client->subscribe('com.myapp.ordini.spediti', function (array $args, array $kwargs): void {
-        $ordineId = $kwargs['ordine_id'] ?? null;
-        $corriere = $kwargs['corriere']  ?? 'sconosciuto';
+    $event->client->subscribe('com.myapp.orders.shipped', function (array $args, array $kwargs): void {
+        $orderId = $kwargs['order_id'] ?? null;
+        $carrier = $kwargs['carrier']  ?? 'unknown';
 
-        if ($ordineId) {
-            \App\Models\Ordine::find($ordineId)?->update([
-                'notifica_spedizione_inviata' => true,
+        if ($orderId) {
+            \App\Models\Order::find($orderId)?->update([
+                'shipping_notification_sent' => true,
             ]);
 
-            Log::info("Ordine {$ordineId} spedito con {$corriere}");
+            Log::info("Order {$orderId} shipped with {$carrier}");
         }
     });
 
     // Dynamic subscription and unsubscription
-    $subscription = $event->client->subscribe('com.myapp.temporaneo', function (array $args): void {
-        Log::debug('Evento temporaneo ricevuto', $args);
+    $subscription = $event->client->subscribe('com.myapp.temporary', function (array $args): void {
+        Log::debug('Temporary event received', $args);
     });
 
     // You can unsubscribe later
@@ -539,14 +542,14 @@ Event::listen(WampEventReceived::class, function (WampEventReceived $event): voi
 
     // Filter by topic
     match ($event->topic) {
-        'com.myapp.ordini.spediti' => dispatch(new \App\Jobs\ProcessaSpedizione(
-            ordineId: $event->kwargs['ordine_id'],
+        'com.myapp.orders.shipped' => dispatch(new \App\Jobs\ProcessShipment(
+            orderId: $event->kwargs['order_id'],
         )),
-        'com.myapp.notifiche' => \App\Models\Notifica::create([
-            'contenuto' => $event->args[0] ?? '',
-            'ricevuta_at' => now(),
+        'com.myapp.notifications' => \App\Models\Notification::create([
+            'content'     => $event->args[0] ?? '',
+            'received_at' => now(),
         ]),
-        default => Log::debug("Evento WAMP non gestito: {$event->topic}"),
+        default => Log::debug("Unhandled WAMP event: {$event->topic}"),
     };
 
 });
@@ -562,14 +565,14 @@ use Hermod\LaravelWamp\Laravel\Events\WampServeStarted;
 Event::listen(WampServeStarted::class, function (WampServeStarted $event) {
 
     // ── RPC Procedures ────────────────────────────────────
-    $event->client->register('com.myapp.utente.crea', function (array $args, array $kwargs): array {
+    $event->client->register('com.myapp.user.create', function (array $args, array $kwargs): array {
         $user = \App\Models\User::create([
-            'name'  => $kwargs['nome'],
+            'name'  => $kwargs['name'],
             'email' => $kwargs['email'],
         ]);
 
         // Publish event after user creation
-        $event->client->publish('com.myapp.utenti.creati', [], [
+        $event->client->publish('com.myapp.users.created', [], [
             'user_id' => $user->id,
             'email'   => $user->email,
         ]);
@@ -577,18 +580,18 @@ Event::listen(WampServeStarted::class, function (WampServeStarted $event) {
         return $user->toArray();
     });
 
-    $event->client->register('com.myapp.statistiche', function (): array {
+    $event->client->register('com.myapp.stats', function (): array {
         return [
-            'utenti_totali' => \App\Models\User::count(),
-            'ordini_attivi' => \App\Models\Ordine::where('stato', 'attivo')->count(),
+            'total_users'   => \App\Models\User::count(),
+            'active_orders' => \App\Models\Order::where('status', 'active')->count(),
         ];
     });
 
     // ── PubSub Subscriptions ──────────────────────────────
-    $event->client->subscribe('com.myapp.cache.invalida', function (array $args, array $kwargs): void {
-        $chiave = $kwargs['chiave'] ?? '*';
-        \Illuminate\Support\Facades\Cache::forget($chiave);
-        Log::info("Cache invalidata per chiave: {$chiave}");
+    $event->client->subscribe('com.myapp.cache.invalidate', function (array $args, array $kwargs): void {
+        $key = $kwargs['key'] ?? '*';
+        \Illuminate\Support\Facades\Cache::forget($key);
+        Log::info("Cache invalidated for key: {$key}");
     });
 
     $event->client->subscribe('com.myapp.broadcast', function (array $args, array $kwargs): void {
@@ -644,20 +647,20 @@ php artisan wamp:serve --realm=myrealm
 php artisan wamp:serve --serializer=cbor
 
 # Make an RPC call from the terminal
-php artisan wamp:call com.myapp.somma 3 5
-php artisan wamp:call com.myapp.saluta --kwargs='{"nome":"Mario"}'
-php artisan wamp:call com.myapp.somma 10 20 --connection=secure
+php artisan wamp:call com.myapp.add 3 5
+php artisan wamp:call com.myapp.greet --kwargs='{"name":"Mario"}'
+php artisan wamp:call com.myapp.add 10 20 --connection=secure
 ```
 
 ---
 
 ## Serializers
 
-| Driver    | Subprotocol      | Stato      | Note                              | .env                    |
-| --------- | ---------------- | ---------- | --------------------------------- | ----------------------- |
-| `json`    | `wamp.2.json`    | ✅ Stabile | Default, nessuna dipendenza extra | WAMP_SERIALIZER=json    |
-| `cbor`    | `wamp.2.cbor`    | ✅ Stabile | Richiede `spomky-labs/cbor-php`   | WAMP_SERIALIZER=cbor    |
-| `msgpack` | `wamp.2.msgpack` | ✅ Stabile | Richiede `rybakit/msgpack`        | WAMP_SERIALIZER=msgpack |
+| Driver    | Subprotocol      | Status    | Notes                                       | .env                    |
+| --------- | ---------------- | --------- | ------------------------------------------- | ----------------------- |
+| `json`    | `wamp.2.json`    | ✅ Stable | Default, no extra dependencies              | WAMP_SERIALIZER=json    |
+| `cbor`    | `wamp.2.cbor`    | ✅ Stable | Uses `spomky-labs/cbor-php` (bundled)       | WAMP_SERIALIZER=cbor    |
+| `msgpack` | `wamp.2.msgpack` | ✅ Stable | Uses `rybakit/msgpack`, pure PHP (bundled)  | WAMP_SERIALIZER=msgpack |
 
 ---
 
@@ -673,12 +676,14 @@ php artisan wamp:call com.myapp.somma 10 20 --connection=secure
 
 ## Roadmap
 
-| Version  | Content                                           |
-| -------- | ------------------------------------------------- |
-| **v0.1** | RPC Core — Caller, Callee, JSON, CBOR ✅          |
-| **v0.2** | PubSub — Publisher, Subscriber ✅                 |
-| **v0.3** | Auth — WAMP-CRA, Ticket, Reconnect ✅             |
-| **v1.0** | MessagePack, RawSocket, Complete documentation ✅ |
+| Version  | Content                                                     |
+| -------- | ----------------------------------------------------------- |
+| **v0.1** | RPC Core — Caller, Callee, JSON, CBOR ✅                    |
+| **v0.2** | PubSub — Publisher, Subscriber ✅                           |
+| **v0.3** | Auth — WAMP-CRA, Ticket, Reconnect ✅                       |
+| **v1.0** | MessagePack, RawSocket, Complete documentation ✅           |
+| **v2.0** | Configuration renamed to `config/wamp.php` ✅               |
+| **v2.1** | Dynamic ticket authentication (JWT), reliable reconnect ✅  |
 
 ---
 
@@ -710,8 +715,4 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-Laravel-WAMP is open source software released under the [MIT] License (LICENSE.md).
-
-```
-
-```
+Laravel-WAMP is open source software released under the [MIT License](LICENSE.md).
