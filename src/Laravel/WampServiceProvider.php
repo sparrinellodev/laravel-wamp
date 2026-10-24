@@ -103,8 +103,11 @@ class WampServiceProvider extends ServiceProvider
             return new WampSessionFactory;
         });
 
-        $this->app->singleton(AuthenticatorFactory::class, function () {
-            return new AuthenticatorFactory;
+        $this->app->singleton(AuthenticatorFactory::class, function ($app) {
+            return new AuthenticatorFactory(
+                // Ticket providers are resolved from the container, so they can use dependency injection
+                resolver: fn (string $class) => $app->make($class),
+            );
         });
 
         $this->app->singleton(WampClientFactory::class, function ($app) {
