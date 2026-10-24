@@ -7,6 +7,7 @@ use Hermod\LaravelWamp\Contracts\TransportContract;
 use Hermod\LaravelWamp\Exceptions\AuthenticationException;
 use Hermod\LaravelWamp\Exceptions\WampProtocolException;
 use Hermod\LaravelWamp\Serializer\JsonSerializer;
+use Hermod\LaravelWamp\Session\SessionState;
 use Hermod\LaravelWamp\Session\WampSession;
 
 describe('WampSession — Auth', function () {
@@ -229,9 +230,11 @@ describe('WampSession — Auth', function () {
             $this->transport->shouldReceive('connect')->once();
             $this->transport->shouldReceive('send')->once();
             $this->transport->shouldReceive('receive')->once()->andReturn($challenge);
+            $this->transport->shouldReceive('close')->once();
 
             expect(fn () => $session->hello())
-                ->toThrow(AuthenticationException::class);
+                ->toThrow(AuthenticationException::class)
+                ->and($session->getState())->toBe(SessionState::Closed);
         });
     });
 });

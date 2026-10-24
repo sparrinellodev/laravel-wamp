@@ -111,6 +111,32 @@ class Callee implements CalleeContract
     }
 
     // -------------------------------------------------------------------------
+    // Session Recovery
+    // -------------------------------------------------------------------------
+
+    /**
+     * Forget every registration, active or pending, and return their handlers.
+     *
+     * Used after the connection is lost: the router has already dropped the old
+     * session's registrations, so they must be registered again on a new session.
+     *
+     * @return array<string, callable> Procedure URI → handler.
+     */
+    public function flush(): array
+    {
+        $handlers = $this->getRegistrations();
+
+        foreach ($this->pendingRegistrations as $procedure => $pending) {
+            $handlers[$procedure] = $pending['handler'];
+        }
+
+        $this->registrations = [];
+        $this->pendingRegistrations = [];
+
+        return $handlers;
+    }
+
+    // -------------------------------------------------------------------------
     // Incoming Message Handlers
     // -------------------------------------------------------------------------
 

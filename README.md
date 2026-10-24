@@ -555,11 +555,17 @@ Event::listen(WampServeStarted::class, function (WampServeStarted $event) {
 Reconnect is configured in `config/wamp.php` and works transparently
 during `listen()`. When the connection drops, Laravel-WAMP:
 
-1. Detects the disconnection in the listening loop
-2. Waits for the initial delay (default: 1 second)
-3. Attempts to reconnect
-4. If it fails, it applies exponential backoff (1s → 2s → 4s → 8s → 16s → max 30s)
-5. After a successful reconnect, it automatically re-registers all procedures and subscriptions
+1. Detects the disconnection in the listening loop and closes the session
+2. Rejects any in-flight call or `publishWithAck()` with a `WampClientException`
+3. Waits for the initial delay (default: 1 second)
+4. Attempts to reconnect
+5. If it fails, it applies exponential backoff (1s → 2s → 4s → 8s → 16s → max 30s)
+6. After a successful reconnect, it automatically re-registers all procedures and subscriptions,
+   including those still awaiting the router's confirmation when the connection dropped
+
+If every attempt fails, `listen()` throws a `WampClientException` (the underlying
+`ReconnectException` is available via `getPrevious()`), so `php artisan wamp:serve` exits
+with an error and your process manager (e.g. Supervisor) can restart it.
 
 ```php
 // Custom configuration for critical environment

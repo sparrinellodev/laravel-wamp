@@ -78,4 +78,16 @@ describe('Caller', function () {
 
         expect(true)->toBeTrue();
     });
+
+    it('rejects every in-flight call with rejectAll()', function () {
+        $this->session->shouldReceive('send')->twice();
+
+        $first = $this->caller->callAsync('com.myapp.uno');
+        $second = $this->caller->callAsync('com.myapp.due');
+
+        $this->caller->rejectAll(new RuntimeException('Connection lost'));
+
+        expect(fn () => $first->await())->toThrow(RuntimeException::class, 'Connection lost')
+            ->and(fn () => $second->await())->toThrow(RuntimeException::class, 'Connection lost');
+    });
 });

@@ -4,6 +4,7 @@ namespace Hermod\LaravelWamp\Client;
 
 use Amp\Future;
 use Hermod\LaravelWamp\Contracts\WampClientContract;
+use Hermod\LaravelWamp\Exceptions\ReconnectException;
 use Hermod\LaravelWamp\Exceptions\TransportException;
 use Hermod\LaravelWamp\Exceptions\WampClientException;
 use Hermod\LaravelWamp\Exceptions\WampProtocolException;
@@ -123,6 +124,8 @@ class WampClient implements WampClientContract
                 $message = $this->session->receive();
                 $this->dispatcher->dispatch($message);
             } catch (TransportException $e) {
+                $this->failPendingRequests($e);
+
                 throw new WampClientException(
                     "Connection lost while waiting for the RPC result: {$e->getMessage()}",
                     previous: $e,
@@ -154,6 +157,8 @@ class WampClient implements WampClientContract
                     $message = $this->session->receive();
                     $this->dispatcher->dispatch($message);
                 } catch (TransportException $e) {
+                    $this->failPendingRequests($e);
+
                     throw new WampClientException(
                         "Connection lost while waiting for the async RPC result: {$e->getMessage()}",
                         previous: $e,
@@ -240,6 +245,8 @@ class WampClient implements WampClientContract
                     $message = $this->session->receive();
                     $this->dispatcher->dispatch($message);
                 } catch (TransportException $e) {
+                    $this->failPendingRequests($e);
+
                     throw new WampClientException(
                         "Connection lost while waiting for PUBLISHED acknowledgment: {$e->getMessage()}",
                         previous: $e,
@@ -326,14 +333,26 @@ class WampClient implements WampClientContract
                 $this->listening = false;
                 return;
             } catch (TransportException $e) {
-                // Connection lost — attempt automatic reconnection if enabled
-                if ($this->reconnectManager->isEnabled()) {
-                    $this->handleReconnect();
-                } else {
+                // Connection lost — fail in-flight requests, then reconnect if enabled
+                $this->failPendingRequests($e);
+
+                if (! $this->reconnectManager->isEnabled()) {
                     $this->listening = false;
+
                     throw new WampClientException(
                         "Connection lost: {$e->getMessage()}",
                         previous: $e,
+                    );
+                }
+
+                try {
+                    $this->handleReconnect();
+                } catch (ReconnectException $re) {
+                    $this->listening = false;
+
+                    throw new WampClientException(
+                        "Connection lost and automatic reconnection failed: {$re->getMessage()}",
+                        previous: $re,
                     );
                 }
             } catch (WampClientException $e) {
@@ -405,28 +424,59 @@ class WampClient implements WampClientContract
 
     /**
      * Handle the reconnection flow and restore the client's state.
-     * * This will suspend operations, attempt to reconnect via the ReconnectManager,
-     * and automatically re-register all RPC endpoints and topic subscriptions
-     * once the new session is established.
+     *
+     * The router has already dropped the old session's registrations and subscriptions,
+     * so they are taken out of the local state and registered again once a new session
+     * is established. A failed attempt (handshake or restoration) is retried by the
+     * ReconnectManager.
+     *
+     * @throws ReconnectException If every reconnection attempt fails.
      */
     private function handleReconnect(): void
     {
-        $registrations = $this->callee->getRegistrations();
-        $subscriptions = $this->subscriber->getSubscriptions();
+        $registrations = $this->callee->flush();
+        $subscriptions = $this->subscriber->flush();
 
         $this->reconnectManager->reconnect(
-            connectFn: fn() => $this->session->hello(),
-            onSuccess: function () use ($registrations, $subscriptions) {
+            connectFn: function (): void {
+                // A previous attempt may have failed after the handshake: start from a closed session
+                if ($this->session->isEstablished()) {
+                    $this->session->goodbye();
+                }
+
+                $this->session->hello();
+            },
+            onSuccess: function () use ($registrations, $subscriptions): void {
+                // Discard any partial state left by a previous failed attempt
+                $this->callee->flush();
+                $this->subscriber->flush();
+
                 // Restore all RPC registrations
                 foreach ($registrations as $procedure => $handler) {
                     $this->callee->register($procedure, $handler);
                 }
 
                 // Restore all Pub/Sub subscriptions
-                foreach ($subscriptions as $topic => $subscription) {
-                    $this->subscriber->subscribe($topic, $subscription->handler);
+                foreach ($subscriptions as $topic => $handler) {
+                    $this->subscriber->subscribe($topic, $handler);
                 }
             },
         );
+    }
+
+    /**
+     * Reject every in-flight call and publication acknowledgement after the connection is lost.
+     *
+     * @param  TransportException  $e  The transport failure that ended the session.
+     */
+    private function failPendingRequests(TransportException $e): void
+    {
+        $error = new WampClientException(
+            "Connection lost: {$e->getMessage()}",
+            previous: $e,
+        );
+
+        $this->caller->rejectAll($error);
+        $this->publisher->rejectAll($error);
     }
 }

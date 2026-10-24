@@ -138,5 +138,14 @@ describe('Publisher', function () {
 
             expect(true)->toBeTrue();
         });
+
+        it('fails every pending acknowledgement with rejectAll()', function () {
+            $this->session->shouldReceive('send')->once();
+
+            $future = $this->publisher->publishWithAck('com.myapp.test', []);
+            $this->publisher->rejectAll(new RuntimeException('Connection lost'));
+
+            expect(fn () => $future->await())->toThrow(RuntimeException::class, 'Connection lost');
+        });
     });
 });
